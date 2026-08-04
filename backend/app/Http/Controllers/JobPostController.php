@@ -52,7 +52,10 @@ class JobPostController extends Controller
      */
     public function show(JobPost $jobPost)
     {
-        //
+        return response()->json([
+            'message' => 'Job retrieved successfully',
+            'data' => $jobPost
+        ]); 
     }
 
     /**
@@ -68,7 +71,22 @@ class JobPostController extends Controller
      */
     public function update(Request $request, JobPost $jobPost)
     {
-        //
+         $validated = $request->validate([
+        'title' => 'sometimes|string|max:255',
+        'company' => 'sometimes|string|max:255',
+        'location' => 'sometimes|string|max:255',
+        'salary' => 'nullable|numeric',
+        'job_type' => 'sometimes|string|max:100',
+        'description' => 'sometimes|string',
+        'status' => 'sometimes|in:pending,approved,rejected',
+    ]);
+
+    $jobPost->update($validated);
+
+    return response()->json([
+        'message' => 'Job updated successfully',
+        'data' => $jobPost
+    ]);
     }
 
     /**
@@ -76,6 +94,10 @@ class JobPostController extends Controller
      */
     public function destroy(JobPost $jobPost)
     {
-        //
+        $jobPost->delete();
+
+    return response()->json([
+        'message' => 'Job deleted successfully'
+    ]);
     }
 }
