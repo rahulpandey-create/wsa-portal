@@ -18,6 +18,7 @@ class AuthenticationController extends Controller
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'role' => 'associate',
             'password' => Hash::make($request->password)
         ]);
         return response()->json(['message' => 'User registered successfully']);
