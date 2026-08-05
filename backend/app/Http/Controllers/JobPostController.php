@@ -13,14 +13,17 @@ class JobPostController extends Controller
     public function index(Request $request)
 {
     // dd("INDEX HIT");
-    // dd($request->user()->role);
-    // if ($request->user()->role === 'admin') {
-    //     $jobPosts = JobPost::all();
-    // } else {
-    //     $jobPosts = JobPost::where('status', 'approved')->get();
-    // }
 
-    // return response()->json($jobPosts);
+    // dd($request->user()->role);
+
+    if ($request->user()->role === 'admin') {
+        $jobPosts = JobPost::all();
+    } else {
+        $jobPosts = JobPost::where('status', 'approved')->get();
+    }
+
+    return response()->json($jobPosts);
+    
     // return response()->json($request->user());
 
     //  return response()->json([
@@ -28,10 +31,10 @@ class JobPostController extends Controller
     //     'method' => __METHOD__,
     // ]);
 
-     return response()->json([
-        'user' => $request->user(),
-        'role' => $request->user()->role
-    ]);
+    //  return response()->json([
+    //     'user' => $request->user(),
+    //     'role' => $request->user()->role
+    // ]);
 
 }
 
@@ -49,18 +52,21 @@ class JobPostController extends Controller
      */
     public function store(Request $request)
     {
-         $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'company' => 'required|string|max:255',
-        'location' => 'required|string|max:255',
-        'salary' => 'nullable|numeric',
-        'job_type' => 'required|string|max:100',
-        'description' => 'required|string',
-        'status' => 'nullable|in:pending,approved,rejected',
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'company' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'salary' => 'nullable|numeric',
+            'job_type' => 'required|string|max:100',
+            'description' => 'required|string',
+            // 'status' => 'nullable|in:pending,approved,rejected',
     ]);
 
-    $job = \App\Models\JobPost::create($validated);
-
+    // $job = \App\Models\JobPost::create($validated);
+        $job = JobPost::create([
+        ...$validated,
+        'status' => 'pending',
+    ]);
     return response()->json([
         'message' => 'Job created successfully',
         'data' => $job
