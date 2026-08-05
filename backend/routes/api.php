@@ -13,13 +13,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('logout', [AuthenticationController::class, 'logOut']);
 
-    Route::middleware('admin')->group(function () {
+    Route::get('job-posts', [JobPostController::class, 'index']);
+//     Route::get('job-posts', function () {
+//     return response()->json([
+//         'message' => 'ROUTE HIT'
+//     ]);
+// });
 
-        Route::get('job-posts', [JobPostController::class, 'index']);
-        Route::get('job-posts/{jobPost}', [JobPostController::class, 'show']);
-        Route::post('job-posts', [JobPostController::class, 'store']);
-        Route::put('job-posts/{jobPost}', [JobPostController::class, 'update']);
-        Route::delete('job-posts/{jobPost}', [JobPostController::class, 'destroy']);
+    Route::get('job-posts/{jobPost}', [JobPostController::class, 'show']);
+
+        Route::middleware('admin')->group(function () {
+            Route::patch('job-posts/{jobPost}/approve', [JobPostController::class, 'approve']);
+            Route::patch('job-posts/{jobPost}/reject', [JobPostController::class, 'reject']);
+            Route::post('job-posts', [JobPostController::class, 'store']);
+            Route::put('job-posts/{jobPost}', [JobPostController::class, 'update']);
+            Route::delete('job-posts/{jobPost}', [JobPostController::class, 'destroy']);
 
     });
 
