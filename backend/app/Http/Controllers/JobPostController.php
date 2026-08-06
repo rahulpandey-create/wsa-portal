@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JobPost;
 use Illuminate\Http\Request;
+use App\Http\Resources\JobPostResource;
 
 class JobPostController extends Controller
 {
@@ -11,32 +12,36 @@ class JobPostController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
-    // dd("INDEX HIT");
+    {
+        // dd("INDEX HIT");
 
-    // dd($request->user()->role);
+        // dd($request->user()->role);
 
-    if ($request->user()->role === 'admin') {
-        $jobPosts = JobPost::all();
-    } else {
-        $jobPosts = JobPost::where('status', 'approved')->get();
+        if ($request->user()->role === 'admin') {
+            $jobPosts = JobPost::all();
+        } else {
+            $jobPosts = JobPost::where('status', 'approved')->get();
+        }
+
+        // return JobPostResource::collection(
+        //     $query->paginate($perPage)
+// );
+
+        return JobPostResource::collection($jobPosts);
+
+        // return response()->json($request->user());
+
+        //  return response()->json([
+        //     'controller' => __FILE__,
+        //     'method' => __METHOD__,
+        // ]);
+
+        //  return response()->json([
+        //     'user' => $request->user(),
+        //     'role' => $request->user()->role
+        // ]);
+
     }
-
-    return response()->json($jobPosts);
-    
-    // return response()->json($request->user());
-
-    //  return response()->json([
-    //     'controller' => __FILE__,
-    //     'method' => __METHOD__,
-    // ]);
-
-    //  return response()->json([
-    //     'user' => $request->user(),
-    //     'role' => $request->user()->role
-    // ]);
-
-}
 
 
     /**
@@ -60,35 +65,35 @@ class JobPostController extends Controller
             'job_type' => 'required|string|max:100',
             'description' => 'required|string',
             // 'status' => 'nullable|in:pending,approved,rejected',
-    ]);
+        ]);
 
-    // $job = \App\Models\JobPost::create($validated);
-        $job = JobPost::create([
-        ...$validated,
-        'status' => 'pending',
-    ]);
-    return response()->json([
-        'message' => 'Job created successfully',
-        'data' => $job
-    ], 201);
+        // $job = \App\Models\JobPost::create($validated);
+        $jobPost = JobPost::create([
+            ...$validated,
+            'status' => 'pending',
+        ]);
+        return response()->json([
+    'message' => 'Job created successfully',
+    'data' => new JobPostResource($jobPost->load(['user'])), // Load the user relationship
+], 201);
     }
 
     /**
      * Display the specified resource.
      */
     public function show(Request $request, JobPost $jobPost)
-{
-    if (
-        $request->user()->role !== 'admin' &&
-        $jobPost->status !== 'approved'
-    ) {
-        return response()->json([
-            'message' => 'Access Denied'
-        ], 403);
-    }
+    {
+        if (
+            $request->user()->role !== 'admin' &&
+            $jobPost->status !== 'approved'
+        ) {
+            return response()->json([
+                'message' => 'Access Denied'
+            ], 403);
+        }
 
-    return response()->json($jobPost);
-}
+        return new JobPostResource($jobPost);
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -103,44 +108,44 @@ class JobPostController extends Controller
      */
     public function update(Request $request, JobPost $jobPost)
     {
-         $validated = $request->validate([
-        'title' => 'sometimes|string|max:255',
-        'company' => 'sometimes|string|max:255',
-        'location' => 'sometimes|string|max:255',
-        'salary' => 'nullable|numeric',
-        'job_type' => 'sometimes|string|max:100',
-        'description' => 'sometimes|string',
-        'status' => 'sometimes|in:pending,approved,rejected',
-    ]);
+        $validated = $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'company' => 'sometimes|string|max:255',
+            'location' => 'sometimes|string|max:255',
+            'salary' => 'nullable|numeric',
+            'job_type' => 'sometimes|string|max:100',
+            'description' => 'sometimes|string',
+            'status' => 'sometimes|in:pending,approved,rejected',
+        ]);
 
-    $jobPost->update($validated);
+        $jobPost->update($validated);
 
-    return response()->json([
-        'message' => 'Job updated successfully',
-        'data' => $jobPost
-    ]);
+        return response()->json([
+            'message' => 'Job updated successfully',
+            'data' => new JobPostResource($jobPost)
+        ]);
     }
-        public function approve(JobPost $jobPost)
-{
-    $jobPost->status = 'approved';
-    $jobPost->save();
+    public function approve(JobPost $jobPost)
+    {
+        $jobPost->status = 'approved';
+        $jobPost->save();
 
-    return response()->json([
-        'message' => 'Job approved successfully',
-        'data' => $jobPost
-    ]);
-}
+        return response()->json([
+            'message' => 'Job approved successfully',
+            'data' => new JobPostResource($jobPost) 
+        ]);
+    }
 
-public function reject(JobPost $jobPost)
-{
-    $jobPost->status = 'rejected';
-    $jobPost->save();
+    public function reject(JobPost $jobPost)
+    {
+        $jobPost->status = 'rejected';
+        $jobPost->save();
 
-    return response()->json([
-        'message' => 'Job rejected successfully',
-        'data' => $jobPost
-    ]);
-}
+        return response()->json([
+            'message' => 'Job rejected successfully',
+            'data' => new JobPostResource($jobPost)
+        ]);
+    }
 
 
     /**
@@ -150,8 +155,8 @@ public function reject(JobPost $jobPost)
     {
         $jobPost->delete();
 
-    return response()->json([
-        'message' => 'Job deleted successfully'
-    ]);
+        return response()->json([
+            'message' => 'Job deleted successfully'
+        ]);
     }
 }
