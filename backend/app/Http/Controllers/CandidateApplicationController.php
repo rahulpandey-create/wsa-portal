@@ -13,14 +13,35 @@ class CandidateApplicationController extends Controller
     public function index(Request $request)
     {
         if ($request->user()->role === 'admin') {
-            $applications = CandidateApplication::with(['user', 'jobPost'])->get();
-        } else {
-            $applications = CandidateApplication::with(['jobPost'])
-                ->where('user_id', $request->user()->id)
-                ->get();
-        }
 
-        return response()->json($applications);
+            $query = CandidateApplication::with(['user', 'jobPost']);
+
+        } else {
+
+            $query = CandidateApplication::with(['jobPost'])
+                ->where('user_id', $request->user()->id);
+
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('job_post_id')) {
+    $query->where('job_post_id', $request->job_post_id);
+}
+
+if ($request->filled('candidate_name')) {
+    $query->where(
+        'candidate_name',
+        'like',
+        '%' . $request->candidate_name . '%'
+    );
+}
+
+if ($request->filled('experience')) {
+    $query->where('experience', $request->experience);
+}
+
+        return response()->json($query->get());
     }
 
     /**
@@ -268,16 +289,17 @@ class CandidateApplicationController extends Controller
                 'message' => 'Resume not uploaded.'
             ], 404);
         }
+
         if (!Storage::disk('public')->exists($candidateApplication->resume)) {
             return response()->json([
                 'message' => 'Resume file not found.'
             ], 404);
         }
+
         return Storage::disk('public')->download(
             $candidateApplication->resume
         );
     }
-
     public function destroy(CandidateApplication $candidateApplication)
     {
         $candidateApplication->delete();
