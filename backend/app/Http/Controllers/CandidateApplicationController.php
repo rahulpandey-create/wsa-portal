@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CandidateApplicationResource;
 use App\Models\CandidateApplication;
 use Illuminate\Http\Request;
 
@@ -71,7 +72,7 @@ class CandidateApplicationController extends Controller
 
         $perPage = min($request->input('per_page', 10), 100);
 
-        return response()->json(
+        return CandidateApplicationResource::collection(
             $query->paginate($perPage)
         );
         ;
@@ -134,7 +135,9 @@ class CandidateApplicationController extends Controller
 
         return response()->json([
             'message' => 'Application submitted successfully',
-            'data' => $application
+            'data' => new CandidateApplicationResource(
+                $application->load(['user', 'jobPost'])
+            )
         ], 201);
     }
 
@@ -152,9 +155,9 @@ class CandidateApplicationController extends Controller
             ], 403);
         }
 
-        return response()->json(
-            $candidateApplication->load(['user', 'jobPost'])
-        );
+        $candidateApplication->load(['user', 'jobPost']);
+
+        return new CandidateApplicationResource($candidateApplication);
     }
 
     /**
@@ -183,7 +186,9 @@ class CandidateApplicationController extends Controller
 
         return response()->json([
             'message' => 'Application updated successfully',
-            'data' => $candidateApplication
+            'data' => new CandidateApplicationResource(
+                $candidateApplication->load(['user', 'jobPost'])
+            )
         ]);
     }
 
@@ -199,8 +204,10 @@ class CandidateApplicationController extends Controller
         $candidateApplication->save();
 
         return response()->json([
-            'message' => 'Candidate selected successfully',
-            'data' => $candidateApplication
+            'message' => 'Candidate selected',
+            'data' => new CandidateApplicationResource(
+                $candidateApplication->load(['user', 'jobPost'])
+            )
         ]);
     }
 
@@ -217,7 +224,9 @@ class CandidateApplicationController extends Controller
 
         return response()->json([
             'message' => 'Candidate rejected successfully',
-            'data' => $candidateApplication
+            'data' => new CandidateApplicationResource(
+                $candidateApplication->load(['user', 'jobPost'])
+            )
         ]);
     }
 
@@ -312,7 +321,12 @@ class CandidateApplicationController extends Controller
         $candidateApplication->status = $validated['status'];
         $candidateApplication->save();
 
-        return response()->json($candidateApplication->fresh());
+        return response()->json([
+            'message' => 'Application status updated successfully',
+            'data' => new CandidateApplicationResource(
+                $candidateApplication->load(['user', 'jobPost'])
+            )
+        ]);
     }
 
     public function downloadResume(CandidateApplication $candidateApplication)
