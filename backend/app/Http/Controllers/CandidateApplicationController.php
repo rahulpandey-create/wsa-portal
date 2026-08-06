@@ -37,6 +37,34 @@ class CandidateApplicationController extends Controller
             );
         }
 
+        if ($request->filled('sort')) {
+
+            switch ($request->sort) {
+
+                case 'latest':
+                    $query->latest();
+                    break;
+
+                case 'oldest':
+                    $query->oldest();
+                    break;
+
+                case 'experience':
+                    $query->orderBy('experience', 'desc');
+                    break;
+
+                case 'name':
+                    $query->orderBy('candidate_name', 'asc');
+                    break;
+
+            }
+
+            $request->validate([
+                'sort' => 'nullable|in:latest,oldest,experience,name',
+            ]);
+
+        }
+
         if ($request->filled('experience')) {
             $query->where('experience', $request->experience);
         }

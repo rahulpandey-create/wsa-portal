@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthenticationController;
 use App\Http\Controllers\JobPostController;
@@ -64,6 +65,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             [CandidateApplicationController::class, 'updateStatus']
 
         );
+        Route::get('dashboard', [DashboardController::class, 'index']);
     });
 
 });
