@@ -26,22 +26,27 @@ class CandidateApplicationController extends Controller
             $query->where('status', $request->status);
         }
         if ($request->filled('job_post_id')) {
-    $query->where('job_post_id', $request->job_post_id);
-}
+            $query->where('job_post_id', $request->job_post_id);
+        }
 
-if ($request->filled('candidate_name')) {
-    $query->where(
-        'candidate_name',
-        'like',
-        '%' . $request->candidate_name . '%'
-    );
-}
+        if ($request->filled('candidate_name')) {
+            $query->where(
+                'candidate_name',
+                'like',
+                '%' . $request->candidate_name . '%'
+            );
+        }
 
-if ($request->filled('experience')) {
-    $query->where('experience', $request->experience);
-}
+        if ($request->filled('experience')) {
+            $query->where('experience', $request->experience);
+        }
 
-        return response()->json($query->get());
+        $perPage = min($request->input('per_page', 10), 100);
+
+        return response()->json(
+            $query->paginate($perPage)
+        );
+        ;
     }
 
     /**
@@ -64,7 +69,7 @@ if ($request->filled('experience')) {
             'phone' => 'required|string|max:20',
             'experience' => 'required|integer|min:0',
             'cover_letter' => 'nullable|string',
-            'resume' => 'nullable|file|mimes:pdf,doc,docx|max:4096', // Optional resume upload
+            'resume' => 'nullable|file|mimes:pdf,doc,docx|max:5120', // Optional resume upload
         ]);
 
         // Prevent duplicate application
