@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Post;
+use App\Models\CandidateApplication;
 
 class User extends Authenticatable
 {
@@ -54,4 +55,8 @@ class User extends Authenticatable
     {
     return $this->hasMany(Post::class);
     }
+    public function candidateApplications(): HasMany
+{
+    return $this->hasMany(CandidateApplication::class);
+}
 }
