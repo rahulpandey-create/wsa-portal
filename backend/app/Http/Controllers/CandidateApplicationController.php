@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCandidateApplicationRequest;
+use App\Http\Requests\UpdateCandidateApplicationRequest;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\CandidateApplicationResource;
 use App\Models\CandidateApplication;
@@ -166,18 +167,27 @@ class CandidateApplicationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CandidateApplication $candidateApplication)
-    {
-        $validated = $request->validate([
-            'candidate_name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|max:255',
-            'phone' => 'sometimes|string|max:20',
-            'experience' => 'sometimes|integer|min:0',
-            'cover_letter' => 'nullable|string',
-        ]);
+    public function update(
+        UpdateCandidateApplicationRequest $request,
+        CandidateApplication $candidateApplication
+    ) {
+        $validated = $request->validated();
 
-        $candidateApplication->update($validated);
+        if ($request->hasFile('resume')) {
 
+            // Delete old resume if it exists
+            if (
+                $candidateApplication->resume &&
+                Storage::disk('public')->exists($candidateApplication->resume)
+            ) {
+                Storage::disk('public')->delete($candidateApplication->resume);
+            }
+
+            // Upload new resume
+            $validated['resume'] = $request
+                ->file('resume')
+                ->store('resumes', 'public');
+        }
         return response()->json([
             'message' => 'Application updated successfully',
             'data' => new CandidateApplicationResource(
