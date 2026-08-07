@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobPost;
+use App\Http\Requests\StoreJobPostRequest;
+use App\Http\Requests\UpdateJobPostRequest;
 use Illuminate\Http\Request;
 use App\Http\Resources\JobPostResource;
 
@@ -55,7 +57,7 @@ class JobPostController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(storeJobPostRequest $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -106,17 +108,9 @@ class JobPostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, JobPost $jobPost)
+    public function update(UpdateJobPostRequest $request, JobPost $jobPost)
     {
-        $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'company' => 'sometimes|string|max:255',
-            'location' => 'sometimes|string|max:255',
-            'salary' => 'nullable|numeric',
-            'job_type' => 'sometimes|string|max:100',
-            'description' => 'sometimes|string',
-            'status' => 'sometimes|in:pending,approved,rejected',
-        ]);
+        $validated = $request->validated();
 
         $jobPost->update($validated);
 
