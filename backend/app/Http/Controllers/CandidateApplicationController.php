@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateCandidateStatusRequest;
 use App\Http\Requests\StoreCandidateApplicationRequest;
 use App\Http\Requests\UpdateCandidateApplicationRequest;
 use Illuminate\Support\Facades\Storage;
@@ -316,14 +317,30 @@ class CandidateApplicationController extends Controller
     //     ]);
     // }
 
-    public function updateStatus(Request $request, CandidateApplication $candidateApplication)
-    {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,shortlisted,interview_scheduled,interviewed,offered,hired,rejected',
-        ]);
+    public function updateStatus(
+        UpdateCandidateStatusRequest $request,
+        CandidateApplication $candidateApplication
+    ) {
+        $validated = $request->validated();
 
-        $candidateApplication->status = $validated['status'];
-        $candidateApplication->save();
+        $currentStatus = $candidateApplication->status;
+        $newStatus = $validated['status'];
+
+        $workflow = [
+            'pending' => ['shortlisted', 'rejected'],
+            'shortlisted' => ['interview_scheduled', 'rejected'],
+            'interview_scheduled' => ['interviewed', 'rejected'],
+            'interviewed' => ['offered', 'rejected'],
+            'offered' => ['hired', 'rejected'],
+            'hired' => [],
+            'rejected' => [],
+        ];
+
+        if (!in_array($newStatus, $workflow[$currentStatus])) {
+            return response()->json([
+                'message' => "Cannot change status from {$currentStatus} to {$newStatus}"
+            ], 400);
+        }
 
         return response()->json([
             'message' => 'Application status updated successfully',
