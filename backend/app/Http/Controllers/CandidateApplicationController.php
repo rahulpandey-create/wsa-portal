@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreCandidateApplicationRequest;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\CandidateApplicationResource;
 use App\Models\CandidateApplication;
 use Illuminate\Http\Request;
@@ -89,17 +91,9 @@ class CandidateApplicationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCandidateApplicationRequest $request)
     {
-        $validated = $request->validate([
-            'job_post_id' => 'required|exists:job_posts,id',
-            'candidate_name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
-            'experience' => 'required|integer|min:0',
-            'cover_letter' => 'nullable|string',
-            'resume' => 'nullable|file|mimes:pdf,doc,docx|max:5120', // Optional resume upload
-        ]);
+        $validated = $request->validated();
 
         // Prevent duplicate application
         $alreadyApplied = CandidateApplication::where('user_id', $request->user()->id)
