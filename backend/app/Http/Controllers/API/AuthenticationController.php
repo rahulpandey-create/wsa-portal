@@ -11,9 +11,9 @@ class AuthenticationController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name' => 'required|min:3',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6'
+            'name' => 'required|min:3|max:255',
+            'email' => 'required|email|unique:users|max:255',
+            'password' => 'required|string|min:6|confirmed',
         ]);
         User::create([
             'name' => $request->name,

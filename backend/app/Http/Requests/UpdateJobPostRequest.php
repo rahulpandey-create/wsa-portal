@@ -26,7 +26,7 @@ class UpdateJobPostRequest extends FormRequest
             'title' => 'required|string|max:255',
             'company' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'salary' => 'required|string|max:255',
+            'salary' => 'nullable|numeric|min:0',
             'job_type' => 'required|string|max:255',
             'description' => 'required|string',
         ];

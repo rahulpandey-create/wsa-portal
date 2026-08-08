@@ -189,6 +189,9 @@ class CandidateApplicationController extends Controller
                 ->file('resume')
                 ->store('resumes', 'public');
         }
+
+        $candidateApplication->update($validated);
+
         return response()->json([
             'message' => 'Application updated successfully',
             'data' => new CandidateApplicationResource(

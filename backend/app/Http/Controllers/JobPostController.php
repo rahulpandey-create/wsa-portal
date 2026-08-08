@@ -76,7 +76,7 @@ class JobPostController extends Controller
         ]);
         return response()->json([
     'message' => 'Job created successfully',
-    'data' => new JobPostResource($jobPost->load(['user'])), // Load the user relationship
+    'data' => new JobPostResource($jobPost), // Load the user relationship
 ], 201);
     }
 

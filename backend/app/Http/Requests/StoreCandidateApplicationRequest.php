@@ -27,7 +27,7 @@ class StoreCandidateApplicationRequest extends FormRequest
             'job_post_id' => 'required|exists:job_posts,id',
             'candidate_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|regex:/^\+?[0-9]{10,15}$/',
             'experience' => 'required|integer|min:0',
             'cover_letter' => 'nullable|string',
             'resume' => 'nullable|file|mimes:pdf,doc,docx|max:5120', // Optional resume upload
