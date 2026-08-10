@@ -1,4 +1,11 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+} from "react-router-dom";
+
+import { useAuth } from "./context/AuthContext";
 
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -12,35 +19,78 @@ import CreateJob from "./pages/CreateJob";
 import UploadJob from "./pages/UploadJob";
 import SponsoredJobs from "./pages/SponsoredJobs";
 
+function ProtectedRoute({ children }) {
+    const { isAuthenticated, loading } = useAuth();
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!isAuthenticated) {
+        return <Navigate to="/" replace />;
+    }
+
+    return children;
+}
+
 export default function App() {
     return (
         <BrowserRouter>
             <Routes>
-
                 <Route path="/" element={<Login />} />
 
-                <Route element={<Layout />}>
+                <Route
+                    element={
+                        <ProtectedRoute>
+                            <Layout />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route
+                        path="/dashboard"
+                        element={<Dashboard />}
+                    />
 
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route
+                        path="/jobs"
+                        element={<Jobs />}
+                    />
 
-                    <Route path="/jobs" element={<Jobs />} />
+                    <Route
+                        path="/job-approvals"
+                        element={<JobApprovals />}
+                    />
 
-                    <Route path="/job-approvals" element={<JobApprovals />} />
+                    <Route
+                        path="/associates"
+                        element={<Associates />}
+                    />
 
-                    <Route path="/associates" element={<Associates />} />
+                    <Route
+                        path="/profiles"
+                        element={<Profiles />}
+                    />
 
-                    <Route path="/profiles" element={<Profiles />} />
+                    <Route
+                        path="/notifications"
+                        element={<Notifications />}
+                    />
 
-                    <Route path="/notifications" element={<Notifications />} />
+                    <Route
+                        path="/create-job"
+                        element={<CreateJob />}
+                    />
 
-                    <Route path="/create-job" element={<CreateJob />} />
+                    <Route
+                        path="/upload-job"
+                        element={<UploadJob />}
+                    />
 
-                    <Route path="/upload-job" element={<UploadJob />} />
-
-                    <Route path="/sponsored-jobs" element={<SponsoredJobs />} />
-
+                    <Route
+                        path="/sponsored-jobs"
+                        element={<SponsoredJobs />}
+                    />
                 </Route>
-
             </Routes>
         </BrowserRouter>
     );

@@ -1,13 +1,15 @@
-// src/pages/Login.jsx
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../assets/styles/login.css";
 import logo from "../assets/images/Work Study-trans back.png";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
 
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -15,7 +17,6 @@ export default function Login() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -30,18 +31,35 @@ export default function Login() {
     setShowPassword((prev) => !prev);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log("Login Data:", formData);
+    try {
+      setError("");
 
-    setShowMessage(true);
+      const user = await login(
+        formData.email,
+        formData.password
+      );
 
-    // TODO:
-    // axios.post(...)
-    // navigate("/dashboard");
+      console.log("Logged in user:", user);
+
+      if (user.role === "admin") {
+        navigate("/dashboard");
+      } else if (user.role === "associate") {
+        navigate("/approved-jobs");
+      } else {
+        setError("Unknown user role.");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+
+      setError(
+        error.data?.message ||
+        "Invalid email or password."
+      );
+    }
   };
-
   const handleForgotPassword = (e) => {
     e.preventDefault();
 
@@ -218,7 +236,7 @@ export default function Login() {
                   : "Show"}
               </button>
             </div>
-                        <div className="row">
+            <div className="row">
               <label
                 className="remember"
                 style={{ margin: 0 }}
@@ -245,22 +263,13 @@ export default function Login() {
             <button
               className="btn primary"
               type="submit"
+              disabled={loading}
             >
-              LOG IN TO PORTAL →
+              {loading ? "LOGGING IN..." : "LOG IN TO PORTAL →"}
             </button>
-
-            {showMessage && (
-              <div
-                className="demo"
-                style={{ display: "block" }}
-              >
-                Login button working.
-                <br />
-                <br />
-                In the live portal,
-                successful authentication
-                would redirect the user to
-                their Associate Dashboard.
+            {error && (
+              <div className="error">
+                {error}
               </div>
             )}
           </form>

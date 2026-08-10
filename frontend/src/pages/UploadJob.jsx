@@ -1,6 +1,7 @@
 // src/pages/UploadJob.jsx
 
 import { useState } from "react";
+import { uploadJobs } from "../api/jobs";
 
 export default function UploadJob() {
 
@@ -16,8 +17,7 @@ export default function UploadJob() {
 
     };
 
-    const handleSubmit = (e) => {
-
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!file) {
@@ -25,14 +25,27 @@ export default function UploadJob() {
             return;
         }
 
-        alert(
-            `${file.name} uploaded successfully. Jobs are now awaiting Admin approval.`
-        );
+        try {
+            const response = await uploadJobs(file);
 
-        setFile(null);
+            alert(
+                response?.message ||
+                "Jobs uploaded successfully."
+            );
 
+            setFile(null);
+        } catch (error) {
+            console.error(
+                "Job upload failed:",
+                error
+            );
+
+            alert(
+                error.data?.message ||
+                "Failed to upload jobs."
+            );
+        }
     };
-
     return (
 
         <>
@@ -60,11 +73,10 @@ export default function UploadJob() {
 
                     <div
 
-                        className={`upload-box ${
-                            dragging
+                        className={`upload-box ${dragging
                                 ? "dragging"
                                 : ""
-                        }`}
+                            }`}
 
                         onDragOver={(e) => {
 
@@ -146,7 +158,7 @@ export default function UploadJob() {
                         )}
 
                     </div>
-                                        <div className="form-actions">
+                    <div className="form-actions">
 
                         <button
                             type="submit"

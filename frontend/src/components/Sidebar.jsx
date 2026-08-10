@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 
 import { NavLink } from "react-router-dom";
-// import logo from "../assets/images/Work Study-trans back.png";
+import logo from "../assets/images/Work Study-trans back.png";
 
 export default function Sidebar({
     role,

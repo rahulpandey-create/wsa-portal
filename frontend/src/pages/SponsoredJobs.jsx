@@ -1,40 +1,69 @@
 // src/pages/SponsoredJobs.jsx
 
-import { useMemo, useState } from "react";
-import seed from "../data/seed";
+import { useEffect, useMemo, useState } from "react";
+import { getJobs } from "../api/jobs";
 
 export default function SponsoredJobs() {
 
     const [search, setSearch] = useState("");
 
-    const jobs = useMemo(() => {
+    const [jobsData, setJobsData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-        return seed.jobs.filter((job) => {
+    useEffect(() => {
+        async function loadJobs() {
+            try {
+                setLoading(true);
+                setError("");
+
+                const response = await getJobs();
+
+                const data = Array.isArray(response)
+                    ? response
+                    : response?.data || [];
+
+                setJobsData(data);
+            } catch (error) {
+                console.error(
+                    "Failed to load jobs:",
+                    error
+                );
+
+                setError(
+                    error.data?.message ||
+                    "Failed to load jobs."
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadJobs();
+    }, []);
+
+    const jobs = useMemo(() => {
+        return jobsData.filter((job) => {
 
             const approved =
-                job.status === "Approved";
+                job.status === "approved";
 
             const matchesSearch =
-                job.title
+                String(job.title || "")
                     .toLowerCase()
                     .includes(search.toLowerCase()) ||
 
-                job.company
+                String(job.company || "")
                     .toLowerCase()
                     .includes(search.toLowerCase()) ||
 
-                job.location
+                String(job.location || "")
                     .toLowerCase()
                     .includes(search.toLowerCase());
 
-            return (
-                approved &&
-                matchesSearch
-            );
-
+            return approved && matchesSearch;
         });
-
-    }, [search]);
+    }, [jobsData, search]);
 
     return (
 
@@ -138,7 +167,7 @@ export default function SponsoredJobs() {
 
                                         <div className="muted">
 
-                                            {job.type}
+                                            {job.job_type}
 
                                         </div>
 
@@ -185,7 +214,7 @@ export default function SponsoredJobs() {
                 </table>
 
             </div>
-                        <div
+            <div
                 style={{
                     height: 20,
                 }}
@@ -266,7 +295,7 @@ export default function SponsoredJobs() {
                                     new Set(
                                         jobs.map(
                                             (job) =>
-                                                job.type
+                                                job.job_type
                                         )
                                     ).size
                                 }

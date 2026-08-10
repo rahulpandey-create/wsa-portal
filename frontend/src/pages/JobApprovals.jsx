@@ -1,307 +1,214 @@
-// src/pages/JobApprovals.jsx
-
-import { useState } from "react";
-import seed from "../data/seed";
+import { useEffect, useState } from "react";
+import {
+    getPendingJobs,
+    approveJob,
+    rejectJob,
+} from "../api/jobs";
 
 export default function JobApprovals() {
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(null);
+    const [error, setError] = useState("");
 
-    const [jobs, setJobs] = useState(
-        seed.jobs
-    );
+    async function loadJobs() {
+        try {
+            setLoading(true);
+            setError("");
 
-    const pendingJobs = jobs.filter(
-        (job) => job.status === "Pending"
-    );
+            const response = await getPendingJobs();
 
-    const updateStatus = (
-        id,
-        status
-    ) => {
+            const jobData = Array.isArray(response)
+                ? response
+                : response?.data || response?.jobs || [];
 
-        setJobs((previous) =>
-            previous.map((job) =>
-                job.id === id
-                    ? {
-                          ...job,
-                          status,
-                      }
-                    : job
-            )
-        );
+            const pendingJobs = jobData.filter(
+                (job) =>
+                    String(job.status || "").toLowerCase() ===
+                    "pending"
+            );
 
+            setJobs(pendingJobs);
+        } catch (error) {
+            console.error(
+                "Failed to load pending jobs:",
+                error
+            );
+
+            setError(
+                error.data?.message ||
+                "Failed to load pending jobs."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        loadJobs();
+    }, []);
+
+    const handleApprove = async (id) => {
+        try {
+            setActionLoading(id);
+            setError("");
+
+            await approveJob(id);
+
+            await loadJobs();
+        } catch (error) {
+            console.error(
+                "Failed to approve job:",
+                error
+            );
+
+            setError(
+                error.data?.message ||
+                "Failed to approve job."
+            );
+        } finally {
+            setActionLoading(null);
+        }
     };
 
+    const handleReject = async (id) => {
+        try {
+            setActionLoading(id);
+            setError("");
+
+            await rejectJob(id);
+
+            await loadJobs();
+        } catch (error) {
+            console.error(
+                "Failed to reject job:",
+                error
+            );
+
+            setError(
+                error.data?.message ||
+                "Failed to reject job."
+            );
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="empty">
+                Loading pending jobs...
+            </div>
+        );
+    }
+
     return (
-
         <>
-
             <div className="page-header">
-
                 <div>
-
-                    <h2>
-                        Pending Job Approval
-                    </h2>
-
+                    <h2>Job Approval</h2>
                     <p>
-                        Review submitted jobs and
-                        approve or reject them.
+                        Review and manage jobs
+                        submitted by Associates.
                     </p>
-
                 </div>
-
             </div>
 
+            {error && (
+                <div className="error-message">
+                    {error}
+                </div>
+            )}
+
             <div className="table-card">
-
                 <table className="table">
-
                     <thead>
-
                         <tr>
-
-                            <th>
-                                Job Title
-                            </th>
-
-                            <th>
-                                Company
-                            </th>
-
-                            <th>
-                                Associate
-                            </th>
-
-                            <th>
-                                Location
-                            </th>
-
-                            <th>
-                                Salary
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th>
-                                Actions
-                            </th>
-
+                            <th>Job</th>
+                            <th>Company</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
-
                     </thead>
 
                     <tbody>
-
-                        {pendingJobs.length ===
-                        0 ? (
-
+                        {jobs.length === 0 ? (
                             <tr>
-
                                 <td
-                                    colSpan="7"
+                                    colSpan="5"
                                     className="empty-table"
                                 >
                                     No pending jobs.
                                 </td>
-
                             </tr>
-
                         ) : (
+                            jobs.map((job) => (
+                                <tr key={job.id}>
+                                    <td>
+                                        <strong>
+                                            {job.title ||
+                                                "Untitled Job"}
+                                        </strong>
+                                    </td>
 
-                            pendingJobs.map(
-                                (job) => (
+                                    <td>
+                                        {job.company ||
+                                            job.company_name ||
+                                            job.employer ||
+                                            "-"}
+                                    </td>
 
-                                    <tr
-                                        key={job.id}
-                                    >
+                                    <td>
+                                        {job.location ||
+                                            job.city ||
+                                            "-"}
+                                    </td>
 
-                                        <td>
+                                    <td>
+                                        {job.status || "-"}
+                                    </td>
 
-                                            <strong>
-                                                {
-                                                    job.title
-                                                }
-                                            </strong>
-
-                                            <div className="muted">
-
-                                                {
-                                                    job.type
-                                                }
-
-                                            </div>
-
-                                        </td>
-
-                                        <td>
-                                            {
-                                                job.company
+                                    <td>
+                                        <button
+                                            className="btn btn-primary"
+                                            disabled={
+                                                actionLoading ===
+                                                job.id
                                             }
-                                        </td>
-
-                                        <td>
-                                            {
-                                                job.associate
+                                            onClick={() =>
+                                                handleApprove(
+                                                    job.id
+                                                )
                                             }
-                                        </td>
+                                        >
+                                            {actionLoading ===
+                                                job.id
+                                                ? "Processing..."
+                                                : "Approve"}
+                                        </button>
 
-                                        <td>
-                                            {
-                                                job.location
+                                        <button
+                                            className="btn btn-outline"
+                                            disabled={
+                                                actionLoading ===
+                                                job.id
                                             }
-                                        </td>
-
-                                        <td>
-                                            {
-                                                job.salary
+                                            onClick={() =>
+                                                handleReject(
+                                                    job.id
+                                                )
                                             }
-                                        </td>
-
-                                        <td>
-
-                                            <span className="badge pending">
-
-                                                Pending
-
-                                            </span>
-
-                                        </td>
-
-                                        <td>
-
-                                            <div className="action-buttons">
-
-                                                <button
-                                                    className="btn btn-success btn-sm"
-                                                    onClick={() =>
-                                                        updateStatus(
-                                                            job.id,
-                                                            "Approved"
-                                                        )
-                                                    }
-                                                >
-                                                    Approve
-                                                </button>
-
-                                                <button
-                                                    className="btn btn-danger btn-sm"
-                                                    onClick={() =>
-                                                        updateStatus(
-                                                            job.id,
-                                                            "Rejected"
-                                                        )
-                                                    }
-                                                >
-                                                    Reject
-                                                </button>
-
-                                            </div>
-
-                                        </td>
-
-                                    </tr>
-
-                                )
-                            )
-
+                                        >
+                                            Reject
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
                         )}
-
                     </tbody>
-
                 </table>
-
             </div>
-                        <div
-                style={{
-                    height: 20,
-                }}
-            />
-
-            <div className="panel">
-
-                <div className="panel-head">
-
-                    <h2>
-                        Approval Workflow
-                    </h2>
-
-                </div>
-
-                <div className="panel-body">
-
-                    <div className="activity">
-
-                        <div className="dot">
-                            1
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Associate submits job
-                            </strong>
-
-                            <p className="muted">
-                                Newly submitted jobs
-                                remain in Pending state.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                    <div className="activity">
-
-                        <div className="dot">
-                            2
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Admin reviews details
-                            </strong>
-
-                            <p className="muted">
-                                Verify salary,
-                                company, location and
-                                job description.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                    <div className="activity">
-
-                        <div className="dot">
-                            3
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                Approve or Reject
-                            </strong>
-
-                            <p className="muted">
-                                Approved jobs become
-                                visible to Associates
-                                immediately.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
         </>
-
     );
-
 }

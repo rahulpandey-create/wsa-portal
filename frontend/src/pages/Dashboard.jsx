@@ -1,46 +1,81 @@
 // src/pages/Dashboard.jsx
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import seed from "../data/seed";
+import { getDashboard } from "../api/dashboard";
+import { getJobs } from "../api/jobs";
+import { getProfiles } from "../api/profiles";
 
 export default function Dashboard({ role = "admin" }) {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [jobsData, setJobsData] = useState([]);
+    const [profilesData, setProfilesData] = useState([]);
 
-    const data = seed;
+    useEffect(() => {
+        async function loadDashboard() {
+            try {
+                setLoading(true);
+                setError("");
 
-    const pendingJobs = useMemo(
-        () =>
-            data.jobs.filter(
-                (job) => job.status === "Pending"
-            ),
-        [data]
+                const [
+                    dashboardResponse,
+                    jobsResponse,
+                    profilesResponse,
+                ] = await Promise.all([
+                    getDashboard(),
+                    getJobs(),
+                    getProfiles(),
+                ]);
+
+                const jobs = Array.isArray(jobsResponse)
+                    ? jobsResponse
+                    : jobsResponse?.data || [];
+
+                const profiles = Array.isArray(profilesResponse)
+                    ? profilesResponse
+                    : profilesResponse?.data || [];
+
+                setData(dashboardResponse);
+                setJobsData(jobs);
+                setProfilesData(profiles);
+
+            } catch (error) {
+                console.error(
+                    "Failed to load dashboard:",
+                    error
+                );
+
+                setError(
+                    error.data?.message ||
+                    "Failed to load dashboard."
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadDashboard();
+    }, []);
+
+    if (loading) {
+        return <div className="empty">Loading dashboard...</div>;
+    }
+
+    if (error) {
+        return <div className="empty">{error}</div>;
+    }
+
+    if (!data) {
+        return <div className="empty">No dashboard data available.</div>;
+    }
+    const pendingJobs = jobsData.filter(
+        (job) => job.status === "pending"
     );
 
-    const approvedJobs = useMemo(
-        () =>
-            data.jobs.filter(
-                (job) => job.status === "Approved"
-            ),
-        [data]
-    );
-
-    const myJobs = useMemo(
-        () =>
-            data.jobs.filter(
-                (job) =>
-                    job.associate ===
-                    "Global Migration Partners"
-            ),
-        [data]
-    );
-
-    const unreadNotifications = useMemo(
-        () =>
-            data.notifications.filter(
-                (notification) =>
-                    !notification.read
-            ),
-        [data]
+    const approvedJobs = jobsData.filter(
+        (job) => job.status === "approved"
     );
 
     if (role === "admin") {
@@ -51,28 +86,28 @@ export default function Dashboard({ role = "admin" }) {
 
                     <StatCard
                         title="Jobs Pending Approval"
-                        value={pendingJobs.length}
+                        value={data.jobs.pending}
                         color="blue"
                         icon="▤"
                     />
 
                     <StatCard
                         title="Available Sponsored Jobs"
-                        value={approvedJobs.length}
+                        value={data.jobs.approved}
                         color="green"
                         icon="✓"
                     />
 
                     <StatCard
                         title="Profiles Received"
-                        value={data.profiles.length}
+                        value={data.applications.total}
                         color="purple"
                         icon="♙"
                     />
 
                     <StatCard
                         title="Registered Associates"
-                        value={data.associates.length}
+                        value={data.users.associates}
                         color="amber"
                         icon="♙"
                     />
@@ -120,7 +155,7 @@ export default function Dashboard({ role = "admin" }) {
 
                         <div className="panel-body cards">
 
-                            {data.activity.map(
+                            {(data.activity || []).map(
                                 (
                                     activity,
                                     index
@@ -189,9 +224,7 @@ export default function Dashboard({ role = "admin" }) {
                     <div className="panel-body">
 
                         <MiniProfiles
-                            profiles={
-                                data.profiles
-                            }
+                            profiles={profilesData}
                         />
 
                     </div>
@@ -248,7 +281,7 @@ export default function Dashboard({ role = "admin" }) {
             </div>
 
             <div className="grid-2">
-                                <section className="panel">
+                <section className="panel">
 
                     <div className="panel-head">
 
@@ -298,11 +331,10 @@ export default function Dashboard({ role = "admin" }) {
 
                                 <div
                                     key={notification.id}
-                                    className={`notification ${
-                                        notification.read
-                                            ? ""
-                                            : "unread"
-                                    }`}
+                                    className={`notification ${notification.read
+                                        ? ""
+                                        : "unread"
+                                        }`}
                                 >
 
                                     <strong>
@@ -510,7 +542,8 @@ function MiniJobs({ jobs }) {
                         </div>
 
                         <span
-                            className={`badge ${job.status.toLowerCase()}`}
+                            className={`badge ${String(job.status || "").toLowerCase()
+                                }`}
                         >
                             {job.status}
                         </span>
@@ -527,45 +560,54 @@ function MiniJobs({ jobs }) {
 
 }
 
-function MiniProfiles({ profiles }) {
+function MiniProfiles({ profiles = [] }) {
 
     return (
 
         <div className="mini-list">
 
-            {profiles.slice(0, 5).map((profile) => (
+            {profiles.length === 0 ? (
 
-                <div
-                    key={profile.id}
-                    className="mini-row"
-                >
+                <div className="empty">
+                    No profiles found.
+                </div>
 
-                    <div>
+            ) : (
 
-                        <strong>
-                            {profile.name}
-                        </strong>
+                profiles.slice(0, 5).map((profile) => (
 
-                        <div className="muted">
+                    <div
+                        key={profile.id}
+                        className="mini-row"
+                    >
 
-                            {profile.course}
-                            {" • "}
-                            {profile.city}
+                        <div>
+
+                            <strong>
+                                {profile.candidate_name}
+                            </strong>
+
+                            <div className="muted">
+
+                                {profile.job?.title || "-"}
+                                {" • "}
+                                {profile.job?.location || "-"}
+
+                            </div>
 
                         </div>
 
+                        <button className="btn btn-outline btn-sm">
+                            View
+                        </button>
+
                     </div>
 
-                    <button className="btn btn-outline btn-sm">
-                        View
-                    </button>
+                ))
 
-                </div>
-
-            ))}
+            )}
 
         </div>
 
     );
-
 }

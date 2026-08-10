@@ -1,6 +1,7 @@
 // src/pages/CreateJob.jsx
 
 import { useState } from "react";
+import { createJob } from "../api/jobs";
 
 export default function CreateJob() {
 
@@ -8,7 +9,7 @@ export default function CreateJob() {
         title: "",
         company: "",
         location: "",
-        type: "Full Time",
+        job_type: "Full Time",
         salary: "",
         description: "",
     });
@@ -22,23 +23,35 @@ export default function CreateJob() {
 
     };
 
-    const handleSubmit = (e) => {
-
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        alert(
-            "Job submitted successfully. It is now awaiting Admin approval."
-        );
+        try {
+            await createJob(form);
 
-        setForm({
-            title: "",
-            company: "",
-            location: "",
-            type: "Full Time",
-            salary: "",
-            description: "",
-        });
+            alert(
+                "Job submitted successfully. It is now awaiting Admin approval."
+            );
 
+            setForm({
+                title: "",
+                company: "",
+                location: "",
+                job_type: "Full Time",
+                salary: "",
+                description: "",
+            });
+        } catch (error) {
+            console.error(
+                "Failed to create job:",
+                error
+            );
+
+            alert(
+                error.data?.message ||
+                "Failed to submit job."
+            );
+        }
     };
 
     return (
@@ -182,7 +195,7 @@ export default function CreateJob() {
                         />
 
                     </div>
-                                        <div className="form-actions">
+                    <div className="form-actions">
 
                         <button
                             type="submit"
@@ -199,7 +212,7 @@ export default function CreateJob() {
                                     title: "",
                                     company: "",
                                     location: "",
-                                    type: "Full Time",
+                                    job_type: "Full Time",
                                     salary: "",
                                     description: "",
                                 })

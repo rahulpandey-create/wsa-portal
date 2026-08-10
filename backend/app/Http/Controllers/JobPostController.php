@@ -80,6 +80,85 @@ class JobPostController extends Controller
 ], 201);
     }
 
+public function upload(Request $request)
+{
+    $request->validate([
+        'file' => 'required|file|mimes:csv,xlsx,xls|max:5120',
+    ]);
+
+    $file = $request->file('file');
+
+    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(
+        $file->getPathname()
+    );
+
+    $sheet = $spreadsheet->getActiveSheet();
+
+    $rows = $sheet->toArray();
+
+    if (count($rows) < 2) {
+        return response()->json([
+            'message' => 'The uploaded file contains no job records.'
+        ], 422);
+    }
+
+    $headers = array_map(
+        fn ($header) => strtolower(trim($header)),
+        $rows[0]
+    );
+
+    $requiredHeaders = [
+        'title',
+        'company',
+        'location',
+        'salary',
+        'job_type',
+        'description',
+    ];
+
+    foreach ($requiredHeaders as $header) {
+        if (!in_array($header, $headers)) {
+            return response()->json([
+                'message' => "Missing required column: {$header}"
+            ], 422);
+        }
+    }
+
+    $created = [];
+
+    foreach (array_slice($rows, 1) as $row) {
+        $data = array_combine($headers, $row);
+
+        if (
+            empty($data['title']) ||
+            empty($data['company']) ||
+            empty($data['location']) ||
+            empty($data['job_type']) ||
+            empty($data['description'])
+        ) {
+            continue;
+        }
+
+        $jobPost = JobPost::create([
+            'title' => $data['title'],
+            'company' => $data['company'],
+            'location' => $data['location'],
+            'salary' => $data['salary'] ?: null,
+            'job_type' => $data['job_type'],
+            'description' => $data['description'],
+            'status' => 'pending',
+        ]);
+
+        $created[] = $jobPost;
+    }
+
+    return response()->json([
+        'message' => count($created) . ' jobs uploaded successfully.',
+        'data' => JobPostResource::collection($created),
+    ], 201);
+}
+
+
     /**
      * Display the specified resource.
      */

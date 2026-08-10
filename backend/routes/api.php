@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Models\User;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthenticationController;
@@ -30,6 +31,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('candidate-applications', [CandidateApplicationController::class, 'store']);
 
     Route::middleware('admin')->group(function () {
+        Route::post(
+            'job-posts/upload',
+            [JobPostController::class, 'upload']
+        );
+
+        Route::get('associates', function () {
+            return response()->json(
+                User::where('role', 'associate')->get()
+            );
+        });
+        
         Route::patch('job-posts/{jobPost}/approve', [JobPostController::class, 'approve']);
         Route::patch('job-posts/{jobPost}/reject', [JobPostController::class, 'reject']);
         Route::post('job-posts', [JobPostController::class, 'store']);
@@ -66,6 +78,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         );
         Route::get('dashboard', [DashboardController::class, 'index']);
+
     });
 
 });

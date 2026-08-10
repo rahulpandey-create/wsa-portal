@@ -1,261 +1,308 @@
 // src/pages/Profiles.jsx
 
-import { useMemo, useState } from "react";
-import seed from "../data/seed";
+import { useEffect, useMemo, useState } from "react";
+import { getProfiles } from "../api/profiles";
 
 export default function Profiles() {
 
     const [search, setSearch] = useState("");
 
+    const [profilesData, setProfilesData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        async function loadProfiles() {
+            try {
+                setLoading(true);
+                setError("");
+
+                const response = await getProfiles();
+
+                const data = Array.isArray(response)
+                    ? response
+                    : response?.data || [];
+
+                setProfilesData(data);
+            } catch (error) {
+                console.error(
+                    "Failed to load profiles:",
+                    error
+                );
+
+                setError(
+                    error.data?.message ||
+                    "Failed to load profiles."
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadProfiles();
+    }, []);
+
     const profiles = useMemo(() => {
+        return profilesData.filter((profile) => {
+            const name = String(
+                profile.candidate_name || ""
+            ).toLowerCase();
 
-        return seed.profiles.filter((profile) =>
+            const job = String(
+                profile.job?.title || ""
+            ).toLowerCase();
 
-            profile.name
-                .toLowerCase()
-                .includes(search.toLowerCase()) ||
+            const city = String(
+                profile.job?.location || ""
+            ).toLowerCase();
 
-            profile.course
-                .toLowerCase()
-                .includes(search.toLowerCase()) ||
+            const query = search.toLowerCase();
 
-            profile.city
-                .toLowerCase()
-                .includes(search.toLowerCase())
+            return (
+                name.includes(query) ||
+                job.includes(query) ||
+                city.includes(query)
+            );
+        });
+    }, [profilesData, search]);
 
+    if (loading) {
+        return (
+            <div className="empty">
+                Loading profiles...
+            </div>
         );
+    }
 
-    }, [search]);
+    if (error) {
+        return (
+            <div className="empty">
+                {error}
+            </div>
+        );
+    }
 
-    return (
+return (
+    <>
+        <div className="page-header">
 
-        <>
+            <div>
 
-            <div className="page-header">
+                <h2>
+                    Profiles Received
+                </h2>
 
-                <div>
-
-                    <h2>
-                        Profiles Received
-                    </h2>
-
-                    <p>
-                        Student profiles submitted
-                        by Associates for approved
-                        jobs.
-                    </p>
-
-                </div>
+                <p>
+                    Student profiles submitted
+                    by Associates for approved
+                    jobs.
+                </p>
 
             </div>
 
-            <div className="toolbar">
+        </div>
 
-                <input
-                    type="text"
-                    placeholder="Search profiles..."
-                    value={search}
-                    onChange={(e) =>
-                        setSearch(
-                            e.target.value
-                        )
-                    }
-                />
+        <div className="toolbar">
 
-            </div>
+            <input
+                type="text"
+                placeholder="Search profiles..."
+                value={search}
+                onChange={(e) =>
+                    setSearch(e.target.value)
+                }
+            />
 
-            <div className="table-card">
+        </div>
 
-                <table className="table">
+        <div className="table-card">
 
-                    <thead>
+            <table className="table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Student
+                        </th>
+
+                        <th>
+                            Course
+                        </th>
+
+                        <th>
+                            City
+                        </th>
+
+                        <th>
+                            Experience
+                        </th>
+
+                        <th>
+                            Applied Job
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {profiles.length === 0 ? (
 
                         <tr>
 
-                            <th>
-                                Student
-                            </th>
-
-                            <th>
-                                Course
-                            </th>
-
-                            <th>
-                                City
-                            </th>
-
-                            <th>
-                                Experience
-                            </th>
-
-                            <th>
-                                Applied Job
-                            </th>
-
-                            <th>
-                                Action
-                            </th>
+                            <td
+                                colSpan="6"
+                                className="empty-table"
+                            >
+                                No profiles found.
+                            </td>
 
                         </tr>
 
-                    </thead>
+                    ) : (
 
-                    <tbody>
+                        profiles.map((profile) => (
 
-                        {profiles.length === 0 ? (
+                            <tr
+                                key={profile.id}
+                            >
 
-                            <tr>
+                                <td>
 
-                                <td
-                                    colSpan="6"
-                                    className="empty-table"
-                                >
-                                    No profiles found.
+                                    <strong>
+                                        {profile.candidate_name}
+                                    </strong>
+
+                                </td>
+
+                                <td>
+                                    -
+                                </td>
+
+                                <td>
+                                    {profile.job?.location || "-"}
+                                </td>
+
+                                <td>
+                                    {profile.experience != null
+                                        ? `${profile.experience} years`
+                                        : "-"}
+                                </td>
+
+                                <td>
+                                    {profile.job?.title || "-"}
+                                </td>
+
+                                <td>
+
+                                    <button className="btn btn-primary btn-sm">
+                                        View Profile
+                                    </button>
+
                                 </td>
 
                             </tr>
 
-                        ) : (
+                        ))
 
-                            profiles.map((profile) => (
+                    )}
 
-                                <tr
-                                    key={profile.id}
-                                >
+                </tbody>
 
-                                    <td>
+            </table>
 
-                                        <strong>
-                                            {profile.name}
-                                        </strong>
+        </div>
 
-                                    </td>
+        <div
+            style={{
+                height: 20,
+            }}
+        />
 
-                                    <td>
-                                        {profile.course}
-                                    </td>
+        <div className="panel">
 
-                                    <td>
-                                        {profile.city}
-                                    </td>
+            <div className="panel-head">
 
-                                    <td>
-                                        {profile.experience}
-                                    </td>
-
-                                    <td>
-                                        {profile.job}
-                                    </td>
-
-                                    <td>
-
-                                        <button className="btn btn-primary btn-sm">
-
-                                            View Profile
-
-                                        </button>
-
-                                    </td>
-
-                                </tr>
-
-                            ))
-
-                        )}
-
-                    </tbody>
-
-                </table>
+                <h2>
+                    Profile Summary
+                </h2>
 
             </div>
-                        <div
-                style={{
-                    height: 20,
-                }}
-            />
 
-            <div className="panel">
+            <div className="panel-body">
 
-                <div className="panel-head">
+                <div className="stats">
 
-                    <h2>
-                        Profile Summary
-                    </h2>
+                    <div className="stat">
 
-                </div>
+                        <h3>
+                            Total Profiles
+                        </h3>
 
-                <div className="panel-body">
+                        <strong>
+                            {profilesData.length}
+                        </strong>
 
-                    <div className="stats">
+                    </div>
 
-                        <div className="stat">
+                    <div className="stat">
 
-                            <h3>
-                                Total Profiles
-                            </h3>
+                        <h3>
+                            Unique Courses
+                        </h3>
 
-                            <strong>
-                                {seed.profiles.length}
-                            </strong>
+                        <strong>
+                            -
+                        </strong>
 
-                        </div>
+                    </div>
 
-                        <div className="stat">
+                    <div className="stat">
 
-                            <h3>
-                                Unique Courses
-                            </h3>
+                        <h3>
+                            Cities
+                        </h3>
 
-                            <strong>
-                                {
-                                    new Set(
-                                        seed.profiles.map(
+                        <strong>
+                            {
+                                new Set(
+                                    profilesData
+                                        .map(
                                             (profile) =>
-                                                profile.course
+                                                profile.job?.location
                                         )
-                                    ).size
-                                }
-                            </strong>
+                                        .filter(Boolean)
+                                ).size
+                            }
+                        </strong>
 
-                        </div>
+                    </div>
 
-                        <div className="stat">
+                    <div className="stat">
 
-                            <h3>
-                                Cities
-                            </h3>
+                        <h3>
+                            Jobs Applied
+                        </h3>
 
-                            <strong>
-                                {
-                                    new Set(
-                                        seed.profiles.map(
+                        <strong>
+                            {
+                                new Set(
+                                    profilesData
+                                        .map(
                                             (profile) =>
-                                                profile.city
+                                                profile.job?.title
                                         )
-                                    ).size
-                                }
-                            </strong>
-
-                        </div>
-
-                        <div className="stat">
-
-                            <h3>
-                                Jobs Applied
-                            </h3>
-
-                            <strong>
-                                {
-                                    new Set(
-                                        seed.profiles.map(
-                                            (profile) =>
-                                                profile.job
-                                        )
-                                    ).size
-                                }
-                            </strong>
-
-                        </div>
+                                        .filter(Boolean)
+                                ).size
+                            }
+                        </strong>
 
                     </div>
 
@@ -263,8 +310,8 @@ export default function Profiles() {
 
             </div>
 
-        </>
+        </div>
 
-    );
-
+    </>
+);
 }

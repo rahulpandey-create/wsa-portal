@@ -1,31 +1,86 @@
 // src/pages/Associates.jsx
 
-import { useMemo, useState } from "react";
-import seed from "../data/seed";
+import { useEffect, useMemo, useState } from "react";
+import { getAssociates } from "../api/users";
 
 export default function Associates() {
 
     const [search, setSearch] = useState("");
 
-    const associates = useMemo(() => {
+    const [associatesData, setAssociatesData] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
 
-        return seed.associates.filter((associate) =>
+useEffect(() => {
+    async function loadAssociates() {
+        try {
+            setLoading(true);
+            setError("");
 
-            associate.name
-                .toLowerCase()
-                .includes(search.toLowerCase()) ||
+            const response = await getAssociates();
 
-            associate.company
-                .toLowerCase()
-                .includes(search.toLowerCase()) ||
+            const data = Array.isArray(response)
+                ? response
+                : response?.data || [];
 
-            associate.email
-                .toLowerCase()
-                .includes(search.toLowerCase())
+            setAssociatesData(data);
+        } catch (error) {
+            console.error(
+                "Failed to load associates:",
+                error
+            );
 
+            setError(
+                error.data?.message ||
+                "Failed to load associates."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    loadAssociates();
+}, []);
+
+const associates = useMemo(() => {
+    return associatesData.filter((associate) => {
+        const name = String(
+            associate.name || ""
+        ).toLowerCase();
+
+        const company = String(
+            associate.company || ""
+        ).toLowerCase();
+
+        const email = String(
+            associate.email || ""
+        ).toLowerCase();
+
+        const query = search.toLowerCase();
+
+        return (
+            name.includes(query) ||
+            company.includes(query) ||
+            email.includes(query)
         );
+    });
+}, [associatesData, search]);
 
-    }, [search]);
+if (loading) {
+    return (
+        <div className="empty">
+            Loading associates...
+        </div>
+    );
+}
+
+if (error) {
+    return (
+        <div className="empty">
+            {error}
+        </div>
+    );
+}
 
     return (
 
@@ -155,10 +210,10 @@ export default function Associates() {
 
                                         <span
                                             className={`badge ${
-                                                associate.status.toLowerCase()
+                                                String(associate.status || "Active").toLowerCase()
                                             }`}
                                         >
-                                            {associate.status}
+                                            {associate.status || "Active"}
                                         </span>
 
                                     </td>
@@ -201,7 +256,7 @@ export default function Associates() {
                             </h3>
 
                             <strong>
-                                {seed.associates.length}
+                                {associatesData.length}
                             </strong>
 
                         </div>
@@ -214,7 +269,7 @@ export default function Associates() {
 
                             <strong>
                                 {
-                                    seed.associates.filter(
+                                    associatesData.filter(
                                         (associate) =>
                                             associate.status ===
                                             "Active"
@@ -232,7 +287,7 @@ export default function Associates() {
 
                             <strong>
                                 {
-                                    seed.associates.filter(
+                                    associatesData.filter(
                                         (associate) =>
                                             associate.status ===
                                             "Inactive"
@@ -250,7 +305,7 @@ export default function Associates() {
 
                             <strong>
                                 {
-                                    seed.associates.reduce(
+                                    associatesData.reduce(
                                         (
                                             total,
                                             associate
