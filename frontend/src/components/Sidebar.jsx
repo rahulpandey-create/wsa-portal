@@ -7,7 +7,6 @@ export default function Sidebar({
     role,
     switchRole
 }) {
-
     const adminItems = [
         {
             path: "/dashboard",
@@ -26,7 +25,7 @@ export default function Sidebar({
         },
         {
             path: "/associates",
-            icon: "♙",
+            icon: "♟",
             label: "Associates",
         },
         {
@@ -80,83 +79,80 @@ export default function Sidebar({
             : associateItems;
 
     return (
-        <aside className="sidebar">
+        <aside className="fixed inset-y-0 left-0 z-40 flex w-[250px] flex-col bg-[#09265c] text-white">
 
-            <div className="brand">
-
-                <img
-                    src={logo}
-                    alt="Work Study Australia"
-                />
-
+            {/* Logo */}
+            <div className="px-4 pt-5">
+                <div className="flex h-[82px] items-center justify-center rounded-[12px] bg-white">
+                    <img
+                        src={logo}
+                        alt="Work Study Australia"
+                        className="max-h-[58px] max-w-[150px] object-contain"
+                    />
+                </div>
             </div>
 
-            <div className="portal-label">
-
-                <span
-                    style={{
-                        fontSize: "22px",
-                    }}
-                >
+            {/* Portal label */}
+            <div className="mt-7 flex items-center gap-3 px-7">
+                <span className="text-[18px]">
                     🛡️
                 </span>
 
-                <span>
+                <span className="text-[16px] font-extrabold tracking-tight">
                     {role === "admin"
                         ? "ADMIN PORTAL"
                         : "ASSOCIATE PORTAL"}
                 </span>
-
             </div>
 
-            <div className="nav">
+            {/* Navigation */}
+            <nav className="mt-5 flex-1 px-4">
 
-                {menu.map((item) => (
+                <div className="flex flex-col gap-[4px]">
 
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            isActive
-                                ? "nav-link active"
-                                : "nav-link"
-                        }
-                    >
+                    {menu.map((item) => (
 
-                        <span
-                            className="nav-icon"
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) =>
+                                [
+                                    "flex items-center gap-2 rounded-[9px] px-[13px] py-[10px]",
+                                    "text-[16px] font-bold no-underline transition-all duration-150",
+                                    isActive
+                                        ? "bg-[#2167d5] text-white"
+                                        : "text-white hover:bg-[#17458f]",
+                                ].join(" ")
+                            }
                         >
-                            {item.icon}
-                        </span>
 
-                        <span
-                            className="nav-text"
-                        >
-                            {item.label}
-                        </span>
+                            <span className="flex w-[20px] shrink-0 items-center justify-center text-[17px]">
+                                {item.icon}
+                            </span>
 
-                    </NavLink>
+                            <span>
+                                {item.label}
+                            </span>
 
-                ))}
+                        </NavLink>
 
-            </div>
+                    ))}
 
-            <div className="sidebar-bottom">
+                </div>
 
-                <div
-                    className="label"
-                    style={{
-                        marginBottom: 10,
-                        fontSize: 13,
-                        color: "#c8d8f3",
-                    }}
-                >
+            </nav>
+
+            {/* Role switch */}
+            <div className="border-t border-white/15 px-4 pb-4 pt-4">
+
+                <div className="mb-[10px] text-[13px] text-[#c8d8f3]">
                     Preview role
                 </div>
 
                 <button
-                    className="role-switch"
+                    type="button"
                     onClick={switchRole}
+                    className="w-full rounded-[7px] border-0 bg-[#25b9df] px-4 py-[12px] text-[16px] font-extrabold text-[#06265c] transition hover:bg-[#35c7ea]"
                 >
                     Switch to{" "}
                     {role === "admin"
@@ -169,6 +165,7 @@ export default function Sidebar({
         </aside>
     );
 }
+
 // ---------------------------
 // Helper Functions
 // ---------------------------
@@ -208,10 +205,6 @@ export const getUserRole = (role) => {
         : "Registered Associate";
 };
 
-// ---------------------------
-// Route Arrays (optional export)
-// ---------------------------
-
 export const adminRoutes = [
     "/dashboard",
     "/job-approvals",
@@ -229,89 +222,3 @@ export const associateRoutes = [
     "/sponsored-jobs",
     "/notifications",
 ];
-
-// ---------------------------
-// Notes
-// ---------------------------
-
-/*
-Role is expected from parent.
-
-Example:
-
-const [role, setRole] = useState(
-    localStorage.getItem("wsaRole") || "admin"
-);
-
-const switchRole = () => {
-
-    const newRole =
-        role === "admin"
-            ? "associate"
-            : "admin";
-
-    localStorage.setItem(
-        "wsaRole",
-        newRole
-    );
-
-    setRole(newRole);
-};
-
-<Sidebar
-    role={role}
-    switchRole={switchRole}
-/>
-
-*/
-
-
-/*
-
-Required CSS changes
-
-Replace
-
-.nav button
-
-with
-
-.nav-link
-
-------------------------
-
-.nav-link{
-    border:0;
-    background:transparent;
-    color:#dce7ff;
-    text-align:left;
-    padding:12px 14px;
-    border-radius:9px;
-    cursor:pointer;
-    font-weight:700;
-    text-decoration:none;
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.nav-link:hover,
-.nav-link.active{
-    background:linear-gradient(
-        90deg,
-        #1a65db,
-        #1455bc
-    );
-    color:#fff;
-}
-
-.nav-icon{
-    width:24px;
-    text-align:center;
-}
-
-.nav-text{
-    flex:1;
-}
-
-*/

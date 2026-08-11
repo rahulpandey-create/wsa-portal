@@ -27,29 +27,25 @@ export default function Topbar({ role }) {
             : user.associate;
 
     return (
-        <header className="topbar">
+        <header className="flex h-[82px] items-center justify-between border-b border-[#dce5f0] bg-white px-7">
 
-            <h1>{title}</h1>
+            <h1 className="m-0 text-[25px] font-bold text-[#071d41]">
+                {title}
+            </h1>
 
-            <div className="user">
+            <div className="flex items-center gap-3">
 
-                <div className="avatar">
+                <div className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-gradient-to-br from-[#1547a8] to-[#22aeda] text-[16px] font-extrabold text-white">
                     {currentUser.initials}
                 </div>
 
-                <div>
+                <div className="leading-tight">
 
-                    <strong>
+                    <strong className="block text-[15px] font-extrabold text-[#071d41]">
                         {currentUser.name}
                     </strong>
 
-                    <div
-                        style={{
-                            fontSize: "12px",
-                            color: "var(--muted)",
-                            marginTop: "2px",
-                        }}
-                    >
+                    <div className="mt-[2px] text-[12px] text-[#60718c]">
                         {currentUser.designation}
                     </div>
 

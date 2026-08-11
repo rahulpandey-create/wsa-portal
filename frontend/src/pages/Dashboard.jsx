@@ -237,7 +237,9 @@ export default function Dashboard({ role = "admin" }) {
 
     return (
         <>
-
+            <div className="fixed bottom-5 right-5 z-50 rounded-lg bg-red-500 px-6 py-4 text-xl font-bold text-white">
+                TAILWIND TEST
+            </div>
             <div className="stats">
 
                 <StatCard

@@ -1,27 +1,47 @@
+// src/components/Layout.jsx
+
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
 export default function Layout() {
-  return (
-    <div className="portal-layout">
+    const [role, setRole] = useState(
+        localStorage.getItem("wsaRole") || "admin"
+    );
 
-      {/* Left Sidebar */}
-      <Sidebar />
+    const switchRole = () => {
+        const newRole =
+            role === "admin"
+                ? "associate"
+                : "admin";
 
-      {/* Right Content */}
-      <div className="portal-content">
+        localStorage.setItem(
+            "wsaRole",
+            newRole
+        );
 
-        {/* Top Navigation */}
-        <Topbar />
+        setRole(newRole);
+    };
 
-        {/* Page Content */}
-        <main className="page-content">
-          <Outlet />
-        </main>
+    return (
+        <div className="min-h-screen bg-[#f3f7fc]">
 
-      </div>
+            <Sidebar
+                role={role}
+                switchRole={switchRole}
+            />
 
-    </div>
-  );
+            <div className="ml-[250px] min-h-screen">
+
+                <Topbar role={role} />
+
+                <main className="px-[26px] py-[26px]">
+                    <Outlet />
+                </main>
+
+            </div>
+
+        </div>
+    );
 }
