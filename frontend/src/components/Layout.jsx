@@ -10,6 +10,8 @@ export default function Layout() {
         localStorage.getItem("wsaRole") || "admin"
     );
 
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
     const switchRole = () => {
         const newRole =
             role === "admin"
@@ -21,16 +23,21 @@ export default function Layout() {
     };
 
     return (
-        <div className="min-h-screen lg:grid lg:grid-cols-[250px_1fr]">
+        <div className="min-h-screen bg-[#f3f6fb]">
 
             <Sidebar
                 role={role}
                 switchRole={switchRole}
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
             />
 
-            <div className="main min-w-0">
+            <div className="min-h-screen md:ml-[84px] lg:ml-[250px]">
 
-                <Topbar role={role} />
+                <Topbar
+                    role={role}
+                    setSidebarOpen={setSidebarOpen}
+                />
 
                 <main className="px-4 py-4 sm:px-5 sm:py-5 lg:px-[26px] lg:py-[26px]">
                     <Outlet />

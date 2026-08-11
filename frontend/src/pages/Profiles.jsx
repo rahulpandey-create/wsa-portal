@@ -4,9 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getProfiles } from "../api/profiles";
 
 export default function Profiles() {
-
     const [search, setSearch] = useState("");
-
     const [profilesData, setProfilesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -43,8 +41,14 @@ export default function Profiles() {
     }, []);
 
     const profiles = useMemo(() => {
+        const query = search.toLowerCase().trim();
+
+        if (!query) {
+            return profilesData;
+        }
+
         return profilesData.filter((profile) => {
-            const name = String(
+            const candidate = String(
                 profile.candidate_name || ""
             ).toLowerCase();
 
@@ -52,23 +56,62 @@ export default function Profiles() {
                 profile.job?.title || ""
             ).toLowerCase();
 
-            const city = String(
-                profile.job?.location || ""
+            const associate = String(
+                profile.user?.name || ""
             ).toLowerCase();
 
-            const query = search.toLowerCase();
+            const email = String(
+                profile.email || ""
+            ).toLowerCase();
 
             return (
-                name.includes(query) ||
+                candidate.includes(query) ||
                 job.includes(query) ||
-                city.includes(query)
+                associate.includes(query) ||
+                email.includes(query)
             );
         });
     }, [profilesData, search]);
 
+    const formatDate = (date) => {
+        if (!date) {
+            return "-";
+        }
+
+        return new Date(date).toISOString().split("T")[0];
+    };
+
+    const formatStatus = (status) => {
+        if (!status) {
+            return "Pending";
+        }
+
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    };
+
+    const getStatusClasses = (status) => {
+        const normalized = String(
+            status || ""
+        ).toLowerCase();
+
+        if (normalized === "offered") {
+            return "bg-[#dcf5ea] text-[#07834f]";
+        }
+
+        if (normalized === "rejected") {
+            return "bg-[#fde5e5] text-[#c73737]";
+        }
+
+        if (normalized === "pending") {
+            return "bg-[#fff1d1] text-[#a96b00]";
+        }
+
+        return "bg-[#e7efff] text-[#1857c9]";
+    };
+
     if (loading) {
         return (
-            <div className="empty">
+            <div className="flex min-h-[200px] items-center justify-center text-[#52688f]">
                 Loading profiles...
             </div>
         );
@@ -76,242 +119,254 @@ export default function Profiles() {
 
     if (error) {
         return (
-            <div className="empty">
+            <div className="rounded-[10px] border border-[#f1c5c5] bg-[#fff4f4] p-4 text-[#c73737]">
                 {error}
             </div>
         );
     }
 
-return (
-    <>
-        <div className="page-header">
+    return (
+        <>
+            {/* Page Header */}
+            <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                    <h2 className="m-0 text-[26px] font-bold text-[#071d41]">
+                        Profiles Received
+                    </h2>
 
-            <div>
-
-                <h2>
-                    Profiles Received
-                </h2>
-
-                <p>
-                    Student profiles submitted
-                    by Associates for approved
-                    jobs.
-                </p>
-
+                    <p className="mt-1 text-[14px] text-[#52688f]">
+                        Profiles submitted by Associates against approved jobs.
+                    </p>
+                </div>
             </div>
 
-        </div>
+            {/* Search */}
+            <div className="mb-5">
+                <input
+                    type="text"
+                    placeholder="Search profiles..."
+                    value={search}
+                    onChange={(e) =>
+                        setSearch(e.target.value)
+                    }
+                    className="w-full max-w-[380px] rounded-[8px] border border-[#cfdbea] bg-white px-3 py-[10px] text-[14px] text-[#071d41] outline-none transition focus:border-[#2167d5] focus:ring-2 focus:ring-[#2167d5]/10"
+                />
+            </div>
 
-        <div className="toolbar">
+            {/* Table Card */}
+            <div className="overflow-hidden rounded-[14px] border border-[#d8e2ef] bg-white shadow-[0_10px_25px_rgba(7,29,76,0.06)]">
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[1050px] border-collapse">
+                        <thead>
+                            <tr className="bg-[#f7f9fc] text-left">
+                                <th className="px-3 py-[13px] text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                    Candidate
+                                </th>
 
-            <input
-                type="text"
-                placeholder="Search profiles..."
-                value={search}
-                onChange={(e) =>
-                    setSearch(e.target.value)
-                }
-            />
+                                <th className="px-3 py-[13px] text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                    Job
+                                </th>
 
-        </div>
+                                <th className="px-3 py-[13px] text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                    Associate
+                                </th>
 
-        <div className="table-card">
+                                <th className="px-3 py-[13px] text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                    Contact
+                                </th>
 
-            <table className="table">
+                                <th className="px-3 py-[13px] text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                    Submitted
+                                </th>
 
-                <thead>
+                                <th className="px-3 py-[13px] text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                    Status
+                                </th>
 
-                    <tr>
-
-                        <th>
-                            Student
-                        </th>
-
-                        <th>
-                            Course
-                        </th>
-
-                        <th>
-                            City
-                        </th>
-
-                        <th>
-                            Experience
-                        </th>
-
-                        <th>
-                            Applied Job
-                        </th>
-
-                        <th>
-                            Action
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    {profiles.length === 0 ? (
-
-                        <tr>
-
-                            <td
-                                colSpan="6"
-                                className="empty-table"
-                            >
-                                No profiles found.
-                            </td>
-
-                        </tr>
-
-                    ) : (
-
-                        profiles.map((profile) => (
-
-                            <tr
-                                key={profile.id}
-                            >
-
-                                <td>
-
-                                    <strong>
-                                        {profile.candidate_name}
-                                    </strong>
-
-                                </td>
-
-                                <td>
-                                    -
-                                </td>
-
-                                <td>
-                                    {profile.job?.location || "-"}
-                                </td>
-
-                                <td>
-                                    {profile.experience != null
-                                        ? `${profile.experience} years`
-                                        : "-"}
-                                </td>
-
-                                <td>
-                                    {profile.job?.title || "-"}
-                                </td>
-
-                                <td>
-
-                                    <button className="btn btn-primary btn-sm">
-                                        View Profile
-                                    </button>
-
-                                </td>
-
+                                <th className="px-3 py-[13px] text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                    Action
+                                </th>
                             </tr>
+                        </thead>
 
-                        ))
+                        <tbody>
+                            {profiles.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan="7"
+                                        className="px-4 py-10 text-center text-[14px] text-[#52688f]"
+                                    >
+                                        No profiles found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                profiles.map((profile) => (
+                                    <tr
+                                        key={profile.id}
+                                        className="border-t border-[#e4ebf4]"
+                                    >
+                                        {/* Candidate */}
+                                        <td className="px-3 py-[14px] align-middle">
+                                            <div>
+                                                <strong className="block text-[13px] font-bold text-[#071d41]">
+                                                    {profile.candidate_name ||
+                                                        "-"}
+                                                </strong>
 
-                    )}
+                                                {profile.resume && (
+                                                    <span className="mt-[2px] block max-w-[180px] truncate text-[11px] text-[#071d41]">
+                                                        {profile.resume}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
 
-                </tbody>
+                                        {/* Job */}
+                                        <td className="px-3 py-[14px] align-middle">
+                                            <span className="text-[13px] text-[#071d41]">
+                                                {profile.job?.title ||
+                                                    "-"}
+                                            </span>
+                                        </td>
 
-            </table>
+                                        {/* Associate */}
+                                        <td className="px-3 py-[14px] align-middle">
+                                            <span className="text-[13px] text-[#071d41]">
+                                                {profile.user?.name ||
+                                                    "-"}
+                                            </span>
+                                        </td>
 
-        </div>
+                                        {/* Contact */}
+                                        <td className="px-3 py-[14px] align-middle">
+                                            <div className="text-[12px] leading-[1.45] text-[#071d41]">
+                                                <div>
+                                                    {profile.email ||
+                                                        "-"}
+                                                </div>
 
-        <div
-            style={{
-                height: 20,
-            }}
-        />
+                                                <div>
+                                                    {profile.phone ||
+                                                        "-"}
+                                                </div>
+                                            </div>
+                                        </td>
 
-        <div className="panel">
+                                        {/* Submitted */}
+                                        <td className="px-3 py-[14px] align-middle">
+                                            <span className="text-[13px] text-[#071d41]">
+                                                {formatDate(
+                                                    profile.created_at
+                                                )}
+                                            </span>
+                                        </td>
 
-            <div className="panel-head">
+                                        {/* Status */}
+                                        <td className="px-3 py-[14px] align-middle">
+                                            <span
+                                                className={`inline-flex rounded-full px-[12px] py-[6px] text-[12px] font-bold ${getStatusClasses(
+                                                    profile.status
+                                                )}`}
+                                            >
+                                                {formatStatus(
+                                                    profile.status
+                                                )}
+                                            </span>
+                                        </td>
 
-                <h2>
-                    Profile Summary
-                </h2>
-
+                                        {/* Action */}
+                                        <td className="px-3 py-[14px] align-middle">
+                                            <button
+                                                type="button"
+                                                className="rounded-[8px] border border-[#d5dfec] bg-white px-[13px] py-[8px] text-[13px] font-bold text-[#071d41] transition hover:bg-[#f5f8fc]"
+                                            >
+                                                View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div className="panel-body">
-
-                <div className="stats">
-
-                    <div className="stat">
-
-                        <h3>
-                            Total Profiles
-                        </h3>
-
-                        <strong>
-                            {profilesData.length}
-                        </strong>
-
-                    </div>
-
-                    <div className="stat">
-
-                        <h3>
-                            Unique Courses
-                        </h3>
-
-                        <strong>
-                            -
-                        </strong>
-
-                    </div>
-
-                    <div className="stat">
-
-                        <h3>
-                            Cities
-                        </h3>
-
-                        <strong>
-                            {
-                                new Set(
-                                    profilesData
-                                        .map(
-                                            (profile) =>
-                                                profile.job?.location
-                                        )
-                                        .filter(Boolean)
-                                ).size
-                            }
-                        </strong>
-
-                    </div>
-
-                    <div className="stat">
-
-                        <h3>
-                            Jobs Applied
-                        </h3>
-
-                        <strong>
-                            {
-                                new Set(
-                                    profilesData
-                                        .map(
-                                            (profile) =>
-                                                profile.job?.title
-                                        )
-                                        .filter(Boolean)
-                                ).size
-                            }
-                        </strong>
-
-                    </div>
-
+            {/* Profile Summary */}
+            <div className="mt-5 overflow-hidden rounded-[14px] border border-[#d8e2ef] bg-white shadow-[0_10px_25px_rgba(7,29,76,0.06)]">
+                <div className="border-b border-[#d8e2ef] px-5 py-4">
+                    <h2 className="m-0 text-[18px] font-bold text-[#071d41]">
+                        Profile Summary
+                    </h2>
                 </div>
 
+                <div className="p-5">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="rounded-[10px] border border-[#d8e2ef] p-4">
+                            <h3 className="m-0 text-[13px] font-medium text-[#52688f]">
+                                Total Profiles
+                            </h3>
+
+                            <strong className="mt-2 block text-[24px] text-[#071d41]">
+                                {profilesData.length}
+                            </strong>
+                        </div>
+
+                        <div className="rounded-[10px] border border-[#d8e2ef] p-4">
+                            <h3 className="m-0 text-[13px] font-medium text-[#52688f]">
+                                Pending
+                            </h3>
+
+                            <strong className="mt-2 block text-[24px] text-[#071d41]">
+                                {
+                                    profilesData.filter(
+                                        (profile) =>
+                                            String(
+                                                profile.status || ""
+                                            ).toLowerCase() ===
+                                            "pending"
+                                    ).length
+                                }
+                            </strong>
+                        </div>
+
+                        <div className="rounded-[10px] border border-[#d8e2ef] p-4">
+                            <h3 className="m-0 text-[13px] font-medium text-[#52688f]">
+                                Offered
+                            </h3>
+
+                            <strong className="mt-2 block text-[24px] text-[#071d41]">
+                                {
+                                    profilesData.filter(
+                                        (profile) =>
+                                            String(
+                                                profile.status || ""
+                                            ).toLowerCase() ===
+                                            "offered"
+                                    ).length
+                                }
+                            </strong>
+                        </div>
+
+                        <div className="rounded-[10px] border border-[#d8e2ef] p-4">
+                            <h3 className="m-0 text-[13px] font-medium text-[#52688f]">
+                                Rejected
+                            </h3>
+
+                            <strong className="mt-2 block text-[24px] text-[#071d41]">
+                                {
+                                    profilesData.filter(
+                                        (profile) =>
+                                            String(
+                                                profile.status || ""
+                                            ).toLowerCase() ===
+                                            "rejected"
+                                    ).length
+                                }
+                            </strong>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-        </div>
-
-    </>
-);
+        </>
+    );
 }

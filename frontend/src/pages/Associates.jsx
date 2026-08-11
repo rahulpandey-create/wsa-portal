@@ -1,332 +1,209 @@
 // src/pages/Associates.jsx
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAssociates } from "../api/users";
 
 export default function Associates() {
+    const [associates, setAssociates] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-    const [search, setSearch] = useState("");
+    useEffect(() => {
+        async function loadAssociates() {
+            try {
+                setLoading(true);
+                setError("");
 
-    const [associatesData, setAssociatesData] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState("");
+                const response = await getAssociates();
 
-useEffect(() => {
-    async function loadAssociates() {
-        try {
-            setLoading(true);
-            setError("");
+                const data = Array.isArray(response)
+                    ? response
+                    : response?.data || response?.associates || [];
 
-            const response = await getAssociates();
+                setAssociates(data);
+            } catch (error) {
+                console.error(
+                    "Failed to load associates:",
+                    error
+                );
 
-            const data = Array.isArray(response)
-                ? response
-                : response?.data || [];
-
-            setAssociatesData(data);
-        } catch (error) {
-            console.error(
-                "Failed to load associates:",
-                error
-            );
-
-            setError(
-                error.data?.message ||
-                "Failed to load associates."
-            );
-        } finally {
-            setLoading(false);
+                setError(
+                    error.data?.message ||
+                    "Failed to load associates."
+                );
+            } finally {
+                setLoading(false);
+            }
         }
+
+        loadAssociates();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex min-h-[200px] items-center justify-center text-[14px] text-[#52688f]">
+                Loading associates...
+            </div>
+        );
     }
 
-    loadAssociates();
-}, []);
-
-const associates = useMemo(() => {
-    return associatesData.filter((associate) => {
-        const name = String(
-            associate.name || ""
-        ).toLowerCase();
-
-        const company = String(
-            associate.company || ""
-        ).toLowerCase();
-
-        const email = String(
-            associate.email || ""
-        ).toLowerCase();
-
-        const query = search.toLowerCase();
-
+    if (error) {
         return (
-            name.includes(query) ||
-            company.includes(query) ||
-            email.includes(query)
+            <div className="rounded-[10px] border border-[#f0caca] bg-[#fff5f5] px-4 py-3 text-[14px] text-[#c73737]">
+                {error}
+            </div>
         );
-    });
-}, [associatesData, search]);
-
-if (loading) {
-    return (
-        <div className="empty">
-            Loading associates...
-        </div>
-    );
-}
-
-if (error) {
-    return (
-        <div className="empty">
-            {error}
-        </div>
-    );
-}
+    }
 
     return (
+        <div>
+            {/* Page heading */}
+            <div className="mb-[16px]">
+                <h2 className="m-0 text-[28px] font-bold leading-tight text-[#071d41]">
+                    Registered Associates
+                </h2>
 
-        <>
-
-            <div className="page-header">
-
-                <div>
-
-                    <h2>
-                        Registered Associates
-                    </h2>
-
-                    <p>
-                        View and manage all
-                        registered migration
-                        partners and associates.
-                    </p>
-
-                </div>
-
+                <p className="mt-[2px] text-[14px] text-[#52688f]">
+                    View and manage registered Associate accounts.
+                </p>
             </div>
 
-            <div className="toolbar">
-
-                <input
-                    type="text"
-                    placeholder="Search associates..."
-                    value={search}
-                    onChange={(e) =>
-                        setSearch(
-                            e.target.value
-                        )
-                    }
-                />
-
-            </div>
-
-            <div className="table-card">
-
-                <table className="table">
-
+            {/* Associates table */}
+            <div className="overflow-x-auto rounded-[14px] border border-[#dce5f0] bg-white shadow-[0_10px_25px_rgba(20,55,100,0.07)]">
+                <table className="min-w-[900px] w-full border-collapse">
                     <thead>
-
-                        <tr>
-
-                            <th>
-                                Name
+                        <tr className="bg-[#f7f9fc]">
+                            <th className="px-3 py-[13px] text-left text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                Business
                             </th>
 
-                            <th>
-                                Company
+                            <th className="px-3 py-[13px] text-left text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                Representative
                             </th>
 
-                            <th>
+                            <th className="px-3 py-[13px] text-left text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                Country
+                            </th>
+
+                            <th className="px-3 py-[13px] text-left text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
                                 Email
                             </th>
 
-                            <th>
-                                Phone
-                            </th>
-
-                            <th>
-                                Jobs Posted
-                            </th>
-
-                            <th>
+                            <th className="px-3 py-[13px] text-left text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
                                 Status
                             </th>
 
-                        </tr>
+                            <th className="px-3 py-[13px] text-left text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                Jobs
+                            </th>
 
+                            <th className="px-3 py-[13px] text-left text-[12px] font-medium uppercase tracking-[0.8px] text-[#52688f]">
+                                Profiles
+                            </th>
+                        </tr>
                     </thead>
 
                     <tbody>
-
                         {associates.length === 0 ? (
-
                             <tr>
-
                                 <td
-                                    colSpan="6"
-                                    className="empty-table"
+                                    colSpan="7"
+                                    className="px-4 py-12 text-center text-[14px] text-[#52688f]"
                                 >
                                     No associates found.
                                 </td>
-
                             </tr>
-
                         ) : (
+                            associates.map((associate) => {
+                                const business =
+                                    associate.company ||
+                                    associate.business ||
+                                    associate.company_name ||
+                                    "-";
 
-                            associates.map((associate) => (
+                                const representative =
+                                    associate.name ||
+                                    associate.representative ||
+                                    associate.contact_name ||
+                                    "-";
 
-                                <tr
-                                    key={associate.id}
-                                >
+                                const country =
+                                    associate.country ||
+                                    "-";
 
-                                    <td>
+                                const email =
+                                    associate.email ||
+                                    "-";
 
-                                        <strong>
-                                            {associate.name}
-                                        </strong>
+                                const status =
+                                    associate.status ||
+                                    "Active";
 
-                                    </td>
+                                const jobs =
+                                    associate.jobsPosted ??
+                                    associate.jobs ??
+                                    associate.jobCount ??
+                                    0;
 
-                                    <td>
-                                        {associate.company}
-                                    </td>
+                                const profiles =
+                                    associate.profiles ??
+                                    associate.profileCount ??
+                                    0;
 
-                                    <td>
-                                        {associate.email}
-                                    </td>
-
-                                    <td>
-                                        {associate.phone}
-                                    </td>
-
-                                    <td>
-
-                                        {
-                                            associate.jobsPosted
+                                return (
+                                    <tr
+                                        key={
+                                            associate.id ||
+                                            associate._id ||
+                                            email
                                         }
+                                        className="border-t border-[#e7edf5]"
+                                    >
+                                        {/* Business */}
+                                        <td className="px-3 py-[17px] text-[13px] text-[#071d41]">
+                                            <strong className="font-bold">
+                                                {business}
+                                            </strong>
+                                        </td>
 
-                                    </td>
+                                        {/* Representative */}
+                                        <td className="px-3 py-[17px] text-[13px] text-[#071d41]">
+                                            {representative}
+                                        </td>
 
-                                    <td>
+                                        {/* Country */}
+                                        <td className="px-3 py-[17px] text-[13px] text-[#071d41]">
+                                            {country}
+                                        </td>
 
-                                        <span
-                                            className={`badge ${
-                                                String(associate.status || "Active").toLowerCase()
-                                            }`}
-                                        >
-                                            {associate.status || "Active"}
-                                        </span>
+                                        {/* Email */}
+                                        <td className="px-3 py-[17px] text-[13px] text-[#071d41]">
+                                            {email}
+                                        </td>
 
-                                    </td>
+                                        {/* Status */}
+                                        <td className="px-3 py-[17px] text-[13px] text-[#071d41]">
+                                            <strong className="font-bold">
+                                                {status}
+                                            </strong>
+                                        </td>
 
-                                </tr>
+                                        {/* Jobs */}
+                                        <td className="px-3 py-[17px] text-[13px] text-[#071d41]">
+                                            {jobs}
+                                        </td>
 
-                            ))
-
+                                        {/* Profiles */}
+                                        <td className="px-3 py-[17px] text-[13px] text-[#071d41]">
+                                            {profiles}
+                                        </td>
+                                    </tr>
+                                );
+                            })
                         )}
-
                     </tbody>
-
                 </table>
-
             </div>
-                        <div
-                style={{
-                    height: 20,
-                }}
-            />
-
-            <div className="panel">
-
-                <div className="panel-head">
-
-                    <h2>
-                        Associate Overview
-                    </h2>
-
-                </div>
-
-                <div className="panel-body">
-
-                    <div className="stats">
-
-                        <div className="stat">
-
-                            <h3>
-                                Total Associates
-                            </h3>
-
-                            <strong>
-                                {associatesData.length}
-                            </strong>
-
-                        </div>
-
-                        <div className="stat">
-
-                            <h3>
-                                Active
-                            </h3>
-
-                            <strong>
-                                {
-                                    associatesData.filter(
-                                        (associate) =>
-                                            associate.status ===
-                                            "Active"
-                                    ).length
-                                }
-                            </strong>
-
-                        </div>
-
-                        <div className="stat">
-
-                            <h3>
-                                Inactive
-                            </h3>
-
-                            <strong>
-                                {
-                                    associatesData.filter(
-                                        (associate) =>
-                                            associate.status ===
-                                            "Inactive"
-                                    ).length
-                                }
-                            </strong>
-
-                        </div>
-
-                        <div className="stat">
-
-                            <h3>
-                                Jobs Posted
-                            </h3>
-
-                            <strong>
-                                {
-                                    associatesData.reduce(
-                                        (
-                                            total,
-                                            associate
-                                        ) =>
-                                            total +
-                                            associate.jobsPosted,
-                                        0
-                                    )
-                                }
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </>
-
+        </div>
     );
-
 }

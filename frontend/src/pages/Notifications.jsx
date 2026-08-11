@@ -1,244 +1,101 @@
 // src/pages/Notifications.jsx
 
-import { useMemo, useState } from "react";
-import seed from "../data/seed";
+import { useState } from "react";
 
 export default function Notifications() {
+    const [notifications, setNotifications] = useState([
+        {
+            id: 1,
+            text: 'New job “Tax Accountant – Perth, WA” has been approved.',
+            date: "8/11/2026, 4:08:56 PM",
+            read: false,
+        },
+        {
+            id: 2,
+            text: 'New job “Tax Accountant – Perth, WA” has been approved.',
+            date: "8/11/2026, 3:52:39 PM",
+            read: false,
+        },
+        {
+            id: 3,
+            text: 'New job “Registered Nurse – Brisbane” has been approved.',
+            date: "2026-07-18 16:20",
+            read: true,
+        },
+        {
+            id: 4,
+            text: 'New job “Civil Engineer – Melbourne” has been approved.',
+            date: "2026-07-19 09:15",
+            read: true,
+        },
+    ]);
 
-    const [search, setSearch] = useState("");
+    const unreadCount = notifications.filter(
+        (notification) => !notification.read
+    ).length;
 
-    const notifications = useMemo(() => {
-
-        return seed.notifications.filter((notification) =>
-
-            notification.text
-                .toLowerCase()
-                .includes(search.toLowerCase())
-
+    const handleMarkAllRead = () => {
+        setNotifications((current) =>
+            current.map((notification) => ({
+                ...notification,
+                read: true,
+            }))
         );
-
-    }, [search]);
+    };
 
     return (
-
         <>
-
-            <div className="page-header">
-
+            {/* Page Header */}
+            <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-
-                    <h2>
+                    <h2 className="m-0 text-[26px] font-bold text-[#071d41]">
                         Notifications
                     </h2>
 
-                    <p>
-                        View all portal notifications
-                        and recent system updates.
+                    <p className="mt-1 text-[14px] text-[#52688f]">
+                        Approved job alerts for registered Associates.
                     </p>
-
                 </div>
 
+                <button
+                    type="button"
+                    onClick={handleMarkAllRead}
+                    disabled={unreadCount === 0}
+                    className="shrink-0 rounded-[8px] border border-[#d5dfec] bg-white px-[13px] py-[9px] text-[16px] font-bold text-[#071d41] transition hover:bg-[#f5f8fc] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    Mark all read
+                </button>
             </div>
 
-            <div className="toolbar">
-
-                <input
-                    type="text"
-                    placeholder="Search notifications..."
-                    value={search}
-                    onChange={(e) =>
-                        setSearch(
-                            e.target.value
-                        )
-                    }
-                />
-
-            </div>
-
-            <div className="table-card">
-
-                <table className="table">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                Message
-                            </th>
-
-                            <th>
-                                Date
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {notifications.length === 0 ? (
-
-                            <tr>
-
-                                <td
-                                    colSpan="3"
-                                    className="empty-table"
-                                >
-                                    No notifications found.
-                                </td>
-
-                            </tr>
-
-                        ) : (
-
-                            notifications.map((notification) => (
-
-                                <tr
-                                    key={notification.id}
-                                >
-
-                                    <td>
-
-                                        <strong>
-
-                                            {notification.text}
-
-                                        </strong>
-
-                                    </td>
-
-                                    <td>
-
-                                        {notification.date}
-
-                                    </td>
-
-                                    <td>
-
-                                        <span
-                                            className={`badge ${
-                                                notification.read
-                                                    ? "approved"
-                                                    : "pending"
-                                            }`}
-                                        >
-
-                                            {notification.read
-                                                ? "Read"
-                                                : "Unread"}
-
-                                        </span>
-
-                                    </td>
-
-                                </tr>
-
-                            ))
-
-                        )}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-                        <div
-                style={{
-                    height: 20,
-                }}
-            />
-
-            <div className="panel">
-
-                <div className="panel-head">
-
-                    <h2>
-                        Notification Summary
-                    </h2>
-
-                </div>
-
-                <div className="panel-body">
-
-                    <div className="stats">
-
-                        <div className="stat">
-
-                            <h3>
-                                Total Notifications
-                            </h3>
-
-                            <strong>
-                                {seed.notifications.length}
-                            </strong>
-
-                        </div>
-
-                        <div className="stat">
-
-                            <h3>
-                                Unread
-                            </h3>
-
-                            <strong>
-                                {
-                                    seed.notifications.filter(
-                                        (notification) =>
-                                            !notification.read
-                                    ).length
-                                }
-                            </strong>
-
-                        </div>
-
-                        <div className="stat">
-
-                            <h3>
-                                Read
-                            </h3>
-
-                            <strong>
-                                {
-                                    seed.notifications.filter(
-                                        (notification) =>
-                                            notification.read
-                                    ).length
-                                }
-                            </strong>
-
-                        </div>
-
-                        <div className="stat">
-
-                            <h3>
-                                Today's Updates
-                            </h3>
-
-                            <strong>
-                                {
-                                    seed.notifications.filter(
-                                        (notification) =>
-                                            notification.date ===
-                                            "Today"
-                                    ).length
-                                }
-                            </strong>
-
-                        </div>
-
+            {/* Notifications */}
+            <div className="flex flex-col gap-[10px]">
+                {notifications.length === 0 ? (
+                    <div className="rounded-[10px] border border-[#d8e2ef] bg-white px-5 py-10 text-center text-[14px] text-[#52688f]">
+                        No notifications found.
                     </div>
+                ) : (
+                    notifications.map((notification) => (
+                        <div
+                            key={notification.id}
+                            className={[
+                                "rounded-[10px] border bg-white px-[14px] py-[11px]",
+                                "transition-all",
+                                notification.read
+                                    ? "border-[#d8e2ef]"
+                                    : "border-[#d8e2ef] border-l-[4px] border-l-[#2160c9]",
+                            ].join(" ")}
+                        >
+                            <div className="text-[16px] font-bold leading-[1.35] text-[#071d41]">
+                                {notification.text}
+                            </div>
 
-                </div>
-
+                            <div className="mt-[3px] text-[12px] text-[#52688f]">
+                                {notification.date}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
-
         </>
-
     );
-
 }
