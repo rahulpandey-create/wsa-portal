@@ -16,27 +16,23 @@ export default function Layout() {
                 ? "associate"
                 : "admin";
 
-        localStorage.setItem(
-            "wsaRole",
-            newRole
-        );
-
+        localStorage.setItem("wsaRole", newRole);
         setRole(newRole);
     };
 
     return (
-        <div className="min-h-screen bg-[#f3f7fc]">
+        <div className="min-h-screen lg:grid lg:grid-cols-[250px_1fr]">
 
             <Sidebar
                 role={role}
                 switchRole={switchRole}
             />
 
-            <div className="ml-[250px] min-h-screen">
+            <div className="main min-w-0">
 
                 <Topbar role={role} />
 
-                <main className="px-[26px] py-[26px]">
+                <main className="px-4 py-4 sm:px-5 sm:py-5 lg:px-[26px] lg:py-[26px]">
                     <Outlet />
                 </main>
 

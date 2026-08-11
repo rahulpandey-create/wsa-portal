@@ -1,7 +1,7 @@
 // src/components/Sidebar.jsx
 
 import { NavLink } from "react-router-dom";
-import logo from "../assets/images/Work Study-trans back.png";
+import logo from "../assets/images/download.png";
 
 export default function Sidebar({
     role,
@@ -79,20 +79,18 @@ export default function Sidebar({
             : associateItems;
 
     return (
-        <aside className="fixed inset-y-0 left-0 z-40 flex w-[250px] flex-col bg-[#09265c] text-white">
+        <aside className="sidebar flex flex-col bg-gradient-to-b from-[#071d4c] to-[#09295f] text-white p-4 lg:sticky lg:top-0 lg:h-screen lg:w-[250px]">
 
-            {/* Logo */}
-            <div className="px-4 pt-5">
+            <div className="brand rounded-[12px] bg-white p-[10px] mb-[18px]">
                 <div className="flex h-[82px] items-center justify-center rounded-[12px] bg-white">
                     <img
                         src={logo}
                         alt="Work Study Australia"
-                        className="max-h-[58px] max-w-[150px] object-contain"
+                        className="h-[58px] w-full object-contain max-[1050px]:h-[45px]"
                     />
                 </div>
             </div>
 
-            {/* Portal label */}
             <div className="mt-7 flex items-center gap-3 px-7">
                 <span className="text-[18px]">
                     🛡️
@@ -105,13 +103,10 @@ export default function Sidebar({
                 </span>
             </div>
 
-            {/* Navigation */}
-            <nav className="mt-5 flex-1 px-4">
-
+            <nav className="mt-5 flex-1 overflow-y-auto px-4">
                 <div className="flex flex-col gap-[4px]">
 
                     {menu.map((item) => (
-
                         <NavLink
                             key={item.path}
                             to={item.path}
@@ -125,7 +120,6 @@ export default function Sidebar({
                                 ].join(" ")
                             }
                         >
-
                             <span className="flex w-[20px] shrink-0 items-center justify-center text-[17px]">
                                 {item.icon}
                             </span>
@@ -133,16 +127,12 @@ export default function Sidebar({
                             <span>
                                 {item.label}
                             </span>
-
                         </NavLink>
-
                     ))}
 
                 </div>
-
             </nav>
 
-            {/* Role switch */}
             <div className="border-t border-white/15 px-4 pb-4 pt-4">
 
                 <div className="mb-[10px] text-[13px] text-[#c8d8f3]">
@@ -165,10 +155,6 @@ export default function Sidebar({
         </aside>
     );
 }
-
-// ---------------------------
-// Helper Functions
-// ---------------------------
 
 export const getPageTitle = (pathname) => {
     const titles = {
