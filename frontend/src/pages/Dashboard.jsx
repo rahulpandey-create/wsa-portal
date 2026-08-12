@@ -1,6 +1,7 @@
 // src/pages/Dashboard.jsx
 
 import { useEffect, useState } from "react";
+// import { Skeleton, SkeletonStats,} from "../components/Skeleton";
 import { Link } from "react-router-dom";
 import { getDashboard } from "../api/dashboard";
 import {
@@ -110,8 +111,8 @@ export default function Dashboard() {
                         Array.isArray(pendingResponse)
                             ? pendingResponse
                             : pendingResponse?.data ||
-                              pendingResponse?.jobs ||
-                              [];
+                            pendingResponse?.jobs ||
+                            [];
 
                     const pending = jobData.filter(
                         (job) =>
@@ -125,8 +126,8 @@ export default function Dashboard() {
                         Array.isArray(applicationsResponse)
                             ? applicationsResponse
                             : applicationsResponse?.data ||
-                              applicationsResponse?.applications ||
-                              [];
+                            applicationsResponse?.applications ||
+                            [];
 
                     setProfiles(applicationData);
                     return;
@@ -143,8 +144,8 @@ export default function Dashboard() {
                     Array.isArray(jobsResponse)
                         ? jobsResponse
                         : jobsResponse?.data ||
-                          jobsResponse?.jobs ||
-                          [];
+                        jobsResponse?.jobs ||
+                        [];
 
                 const approvedJobs = jobData.filter(
                     (job) =>
@@ -156,8 +157,8 @@ export default function Dashboard() {
                     Array.isArray(applicationsResponse)
                         ? applicationsResponse
                         : applicationsResponse?.data ||
-                          applicationsResponse?.applications ||
-                          [];
+                        applicationsResponse?.applications ||
+                        [];
 
                 setProfiles(applicationData);
 
@@ -286,13 +287,7 @@ export default function Dashboard() {
     // --------------------------------------------------
 
     if (loading) {
-
-        return (
-            <div className="flex min-h-[300px] items-center justify-center text-sm text-[#52688f]">
-                Loading dashboard...
-            </div>
-        );
-
+        return <DashboardSkeleton role={role} />;
     }
 
 
@@ -830,6 +825,190 @@ export default function Dashboard() {
 
 
 /* ==========================================================================
+   Dashboard Loading Skeleton
+   ========================================================================== */
+
+function DashboardSkeleton({ role }) {
+    const isAdmin = role === "admin";
+
+    return (
+        <div className="space-y-[18px]">
+
+            {/* Page header */}
+            <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                    {/* <Skeleton
+                        width="170px"
+                        height="28px"
+                        borderRadius="7px"
+                    /> */}
+
+                    <div className="h-[10px]" />
+
+                    {/* <Skeleton
+                        width="310px"
+                        height="14px"
+                        borderRadius="6px"
+                    /> */}
+                </div>
+            </div>
+
+            {/* Statistics */}
+            {/* <SkeletonStats count={4} /> */}
+
+            {isAdmin ? (
+                <>
+                    {/* Pending Jobs + Recent Activity */}
+                    <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-[1.65fr_1fr]">
+
+                        {/* <SkeletonPanel
+                            titleWidth="175px"
+                            rows={5}
+                            showActions
+                        />
+
+                        <SkeletonPanel
+                            titleWidth="135px"
+                            rows={5}
+                        /> */}
+
+                    </div>
+
+                    {/* Profiles */}
+                    {/* <SkeletonPanel
+                        titleWidth="145px"
+                        rows={5}
+                        showActions
+                    /> */}
+                </>
+            ) : (
+                <>
+                    {/* Recent Jobs + Notifications */}
+                    <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-[1.65fr_1fr]">
+
+                        {/* <SkeletonPanel
+                            titleWidth="190px"
+                            rows={5}
+                            showActions
+                        />
+
+                        <SkeletonPanel
+                            titleWidth="175px"
+                            rows={5}
+                            showActions
+                        /> */}
+
+                    </div>
+
+                    {/* Available Sponsored Jobs */}
+                    {/* <SkeletonPanel
+                        titleWidth="205px"
+                        rows={3}
+                        showActions
+                    />
+
+                    {/* Notice */}
+                    {/* <Skeleton
+                        width="100%"
+                        height="72px"
+                        borderRadius="11px"
+                    />  */}
+                </>
+            )}
+        </div>
+    );
+}
+
+
+function SkeletonPanel({
+    titleWidth = "160px",
+    rows = 5,
+    showActions = false,
+}) {
+    return (
+        <section className="overflow-hidden rounded-[15px] border border-[#d9e2ef] bg-white shadow-[0_8px_24px_rgba(30,60,100,0.07)]">
+
+            {/* Panel header */}
+            <div className="flex min-h-[69px] items-center justify-between gap-3 border-b border-[#d9e2ef] px-[20px]">
+
+                <Skeleton
+                    width={titleWidth}
+                    height="20px"
+                    borderRadius="6px"
+                />
+
+                {showActions && (
+                    <Skeleton
+                        width="72px"
+                        height="34px"
+                        borderRadius="9px"
+                    />
+                )}
+
+            </div>
+
+            {/* Panel content */}
+            <div className="px-[18px]">
+
+                {Array.from(
+                    { length: rows },
+                    (_, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center gap-3 border-b border-[#e7edf5] py-[15px] last:border-b-0"
+                        >
+
+                            <Skeleton
+                                width="34px"
+                                height="34px"
+                                borderRadius="10px"
+                            />
+
+                            <div className="min-w-0 flex-1">
+
+                                <Skeleton
+                                    width={
+                                        index % 2 === 0
+                                            ? "65%"
+                                            : "52%"
+                                    }
+                                    height="14px"
+                                    borderRadius="5px"
+                                />
+
+                                <div className="h-[8px]" />
+
+                                <Skeleton
+                                    width={
+                                        index % 2 === 0
+                                            ? "42%"
+                                            : "35%"
+                                    }
+                                    height="12px"
+                                    borderRadius="5px"
+                                />
+
+                            </div>
+
+                            {index < 3 && (
+                                <Skeleton
+                                    width="72px"
+                                    height="28px"
+                                    borderRadius="8px"
+                                />
+                            )}
+
+                        </div>
+                    )
+                )}
+
+            </div>
+        </section>
+    );
+}
+
+
+/* ==========================================================================
    Reusable Components
    ========================================================================== */
 
@@ -958,7 +1137,7 @@ function DashboardJobRow({
 
                             {
                                 typeof job.associate ===
-                                "string"
+                                    "string"
                                     ? job.associate
                                     : job.associate.name
                             }
@@ -983,14 +1162,13 @@ function DashboardJobRow({
                     text-[12px]
                     font-bold
 
-                    ${
-                        normalizedStatus ===
+                    ${normalizedStatus ===
                         "approved"
-                            ? "bg-[#dcf5ea] text-[#07834f]"
-                            : normalizedStatus ===
-                              "rejected"
-                                ? "bg-[#fde5e5] text-[#c73737]"
-                                : "bg-[#fff1d1] text-[#a96b00]"
+                        ? "bg-[#dcf5ea] text-[#07834f]"
+                        : normalizedStatus ===
+                            "rejected"
+                            ? "bg-[#fde5e5] text-[#c73737]"
+                            : "bg-[#fff1d1] text-[#a96b00]"
                     }
                 `}
             >
@@ -1030,7 +1208,7 @@ function DashboardJobRow({
 
                     {
                         actionLoading ===
-                        job.id
+                            job.id
                             ? "..."
                             : "Approve"
                     }
@@ -1216,5 +1394,4 @@ function getInitials(name = "") {
         )
         .join("")
         .toUpperCase();
-
 }
