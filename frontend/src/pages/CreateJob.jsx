@@ -4,318 +4,585 @@ import { useState } from "react";
 import { createJob } from "../api/jobs";
 
 export default function CreateJob() {
-
-    const [form, setForm] = useState({
+    const initialForm = {
         title: "",
         company: "",
-        location: "",
-        job_type: "Full Time",
+        location: "Perth, WA",
+        job_type: "Full-time",
         salary: "",
+        positions: "1",
+        experience: "",
+        qualifications: "",
         description: "",
-    });
+        requirements: "",
+        contact_email: "",
+        confirmation: false,
+    };
+
+    const [form, setForm] = useState(initialForm);
 
     const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
 
         setForm((previous) => ({
             ...previous,
-            [e.target.name]: e.target.value,
+            [name]: type === "checkbox" ? checked : value,
         }));
-
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!form.confirmation) {
+            alert(
+                "Please confirm that the job information is accurate and you are authorised to submit it."
+            );
+            return;
+        }
+
         try {
-            await createJob(form);
+            /*
+             * Send only fields currently supported by the backend.
+             * The additional UI fields remain available for future
+             * backend integration.
+             */
+            await createJob({
+                title: form.title,
+                company: form.company,
+                location: form.location,
+                job_type: form.job_type,
+                salary: form.salary,
+                description: form.description,
+            });
 
             alert(
                 "Job submitted successfully. It is now awaiting Admin approval."
             );
 
-            setForm({
-                title: "",
-                company: "",
-                location: "",
-                job_type: "Full Time",
-                salary: "",
-                description: "",
-            });
+            setForm(initialForm);
         } catch (error) {
-            console.error(
-                "Failed to create job:",
-                error
-            );
+            console.error("Failed to create job:", error);
 
             alert(
                 error.data?.message ||
-                "Failed to submit job."
+                    "Failed to submit job."
             );
         }
     };
 
     return (
-
         <>
-
             <div className="page-header">
-
                 <div>
-
-                    <h2>
-                        Create Job
-                    </h2>
+                    <h2
+                    style={{
+                fontSize: "28px",
+                fontWeight: "700",
+                lineHeight: "1.2",
+                margin: 0,
+            }}>
+                Create a Job
+                </h2>
 
                     <p>
-                        Submit a new job for Admin
-                        approval before it becomes
-                        available to students.
+                        Complete all required fields before
+                        submitting to Admin.
                     </p>
-
                 </div>
-
-            </div>
-
-            <div className="form-card">
-
-                <form
-                    onSubmit={handleSubmit}
-                    className="form-grid"
-                >
-
-                    <div className="form-group">
-
-                        <label>
-                            Job Title
-                        </label>
-
-                        <input
-                            type="text"
-                            name="title"
-                            value={form.title}
-                            onChange={handleChange}
-                            required
-                        />
-
-                    </div>
-
-                    <div className="form-group">
-
-                        <label>
-                            Company
-                        </label>
-
-                        <input
-                            type="text"
-                            name="company"
-                            value={form.company}
-                            onChange={handleChange}
-                            required
-                        />
-
-                    </div>
-
-                    <div className="form-group">
-
-                        <label>
-                            Location
-                        </label>
-
-                        <input
-                            type="text"
-                            name="location"
-                            value={form.location}
-                            onChange={handleChange}
-                            required
-                        />
-
-                    </div>
-
-                    <div className="form-group">
-
-                        <label>
-                            Employment Type
-                        </label>
-
-                        <select
-                            name="type"
-                            value={form.type}
-                            onChange={handleChange}
-                        >
-
-                            <option>
-                                Full Time
-                            </option>
-
-                            <option>
-                                Part Time
-                            </option>
-
-                            <option>
-                                Casual
-                            </option>
-
-                            <option>
-                                Internship
-                            </option>
-
-                        </select>
-
-                    </div>
-
-                    <div className="form-group">
-
-                        <label>
-                            Salary
-                        </label>
-
-                        <input
-                            type="text"
-                            name="salary"
-                            value={form.salary}
-                            onChange={handleChange}
-                            placeholder="$25/hour"
-                            required
-                        />
-
-                    </div>
-
-                    <div className="form-group full-width">
-
-                        <label>
-                            Job Description
-                        </label>
-
-                        <textarea
-                            rows="6"
-                            name="description"
-                            value={form.description}
-                            onChange={handleChange}
-                            required
-                        />
-
-                    </div>
-                    <div className="form-actions">
-
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                        >
-                            Submit Job
-                        </button>
-
-                        <button
-                            type="reset"
-                            className="btn btn-outline"
-                            onClick={() =>
-                                setForm({
-                                    title: "",
-                                    company: "",
-                                    location: "",
-                                    job_type: "Full Time",
-                                    salary: "",
-                                    description: "",
-                                })
-                            }
-                        >
-                            Reset
-                        </button>
-
-                    </div>
-
-                </form>
-
             </div>
 
             <div
                 style={{
-                    height: 20,
+                    background: "#ffffff",
+                    border: "1px solid #d9e2ef",
+                    borderRadius: "16px",
+                    padding: "18px",
+                    boxShadow: "0 8px 24px rgba(15, 35, 75, 0.05)",
                 }}
-            />
-
-            <div className="panel">
-
-                <div className="panel-head">
-
-                    <h2>
-                        Submission Process
-                    </h2>
-
-                </div>
-
-                <div className="panel-body">
-
-                    <div className="activity">
-
-                        <div className="dot">
-                            1
-                        </div>
-
+            >
+                <form onSubmit={handleSubmit}>
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                                "repeat(2, minmax(0, 1fr))",
+                            gap: "18px 16px",
+                        }}
+                    >
+                        {/* Job Title */}
                         <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Job Title *
+                            </label>
 
-                            <strong>
-                                Fill Job Details
-                            </strong>
-
-                            <p className="muted">
-                                Complete all required
-                                information accurately.
-                            </p>
-
+                            <input
+                                type="text"
+                                name="title"
+                                value={form.title}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
                         </div>
 
-                    </div>
-
-                    <div className="activity">
-
-                        <div className="dot">
-                            2
-                        </div>
-
+                        {/* Employer */}
                         <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Employer / Business Name *
+                            </label>
 
-                            <strong>
-                                Submit for Review
-                            </strong>
-
-                            <p className="muted">
-                                The job will be marked
-                                as Pending until
-                                approved by Admin.
-                            </p>
-
+                            <input
+                                type="text"
+                                name="company"
+                                value={form.company}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
                         </div>
 
-                    </div>
-
-                    <div className="activity">
-
-                        <div className="dot">
-                            3
-                        </div>
-
+                        {/* Location */}
                         <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Location *
+                            </label>
 
-                            <strong>
-                                Job Goes Live
-                            </strong>
-
-                            <p className="muted">
-                                After approval,
-                                Associates can submit
-                                student profiles.
-                            </p>
-
+                            <input
+                                type="text"
+                                name="location"
+                                value={form.location}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
                         </div>
 
+                        {/* Employment Type */}
+                        <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Employment Type *
+                            </label>
+
+                            <select
+                                name="job_type"
+                                value={form.job_type}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    background: "#ffffff",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            >
+                                <option value="Full-time">
+                                    Full-time
+                                </option>
+
+                                <option value="Part-time">
+                                    Part-time
+                                </option>
+
+                                <option value="Casual">
+                                    Casual
+                                </option>
+
+                                <option value="Internship">
+                                    Internship
+                                </option>
+                            </select>
+                        </div>
+
+                        {/* Salary */}
+                        <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Salary / Hourly Rate *
+                            </label>
+
+                            <input
+                                type="text"
+                                name="salary"
+                                value={form.salary}
+                                onChange={handleChange}
+                                placeholder="$25/hour"
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* Positions */}
+                        <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Number of Positions *
+                            </label>
+
+                            <input
+                                type="number"
+                                name="positions"
+                                min="1"
+                                value={form.positions}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* Experience */}
+                        <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Minimum Experience *
+                            </label>
+
+                            <input
+                                type="text"
+                                name="experience"
+                                value={form.experience}
+                                onChange={handleChange}
+                                placeholder="e.g. 2–3 years"
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* Qualifications */}
+                        <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Minimum Qualifications *
+                            </label>
+
+                            <input
+                                type="text"
+                                name="qualifications"
+                                value={form.qualifications}
+                                onChange={handleChange}
+                                placeholder="e.g. Bachelor's degree"
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* Description */}
+                        <div
+                            style={{
+                                gridColumn: "1 / -1",
+                            }}
+                        >
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Job Description *
+                            </label>
+
+                            <textarea
+                                name="description"
+                                value={form.description}
+                                onChange={handleChange}
+                                required
+                                rows="5"
+                                style={{
+                                    width: "100%",
+                                    padding: "12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    resize: "vertical",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                    fontFamily: "inherit",
+                                }}
+                            />
+                        </div>
+
+                        {/* Requirements */}
+                        <div
+                            style={{
+                                gridColumn: "1 / -1",
+                            }}
+                        >
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Requirements *
+                            </label>
+
+                            <textarea
+                                name="requirements"
+                                value={form.requirements}
+                                onChange={handleChange}
+                                required
+                                rows="5"
+                                placeholder="Skills, experience, certifications, etc."
+                                style={{
+                                    width: "100%",
+                                    padding: "12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    resize: "vertical",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                    fontFamily: "inherit",
+                                }}
+                            />
+                        </div>
+
+                        {/* Contact Email */}
+                        <div
+                            style={{
+                                gridColumn: "1 / -1",
+                            }}
+                        >
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Employer Contact Email *
+                            </label>
+
+                            <input
+                                type="email"
+                                name="contact_email"
+                                value={form.contact_email}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* Confirmation */}
+                        <div
+                            style={{
+                                gridColumn: "1 / -1",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "10px",
+                                marginTop: "2px",
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                name="confirmation"
+                                checked={form.confirmation}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "15px",
+                                    height: "15px",
+                                    marginTop: "2px",
+                                    flexShrink: 0,
+                                }}
+                            />
+
+                            <label
+                                style={{
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                    lineHeight: "1.4",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                I confirm that the job information is
+                                accurate and I am authorised to submit
+                                it for Admin approval.
+                            </label>
+                        </div>
+
+                        {/* Submit */}
+                        <div
+                            style={{
+                                gridColumn: "1 / -1",
+                            }}
+                        >
+                            <button
+                                type="submit"
+                                className="btn btn-primary"
+                                style={{
+                                    width: "100%",
+                                    height: "42px",
+                                    borderRadius: "8px",
+                                    fontSize: "16px",
+                                    backgroundColor: "#1747b8",
+                                    color: "#ffffff",
+                                    fontWeight: "700",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                Submit Job for Admin Approval
+                            </button>
+                        </div>
                     </div>
-
-                </div>
-
+                </form>
             </div>
-
         </>
-
     );
-
 }

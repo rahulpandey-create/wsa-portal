@@ -27,6 +27,10 @@ export async function createJob(jobData) {
     });
 }
 
+export async function getMyJobs() {
+    return apiRequest("/my-jobs");
+}
+
 export async function uploadJobs(file) {
     const formData = new FormData();
 

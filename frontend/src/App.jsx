@@ -4,6 +4,7 @@ import {
     Route,
     Navigate,
 } from "react-router-dom";
+import MyJobs from "./pages/MyJobs";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -85,7 +86,10 @@ export default function App() {
                         path="/upload-job"
                         element={<UploadJob />}
                     />
-
+                    <Route
+                        path="/my-jobs"
+                        element={<MyJobs />}
+                    />
                     <Route
                         path="/sponsored-jobs"
                         element={<SponsoredJobs />}

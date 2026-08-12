@@ -59,7 +59,7 @@ export default function Login() {
             } else if (
                 user.role === "associate"
             ) {
-                navigate("/approved-jobs");
+                navigate("/dashboard");
             } else {
                 setError(
                     "Unknown user role."
