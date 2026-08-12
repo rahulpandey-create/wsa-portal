@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 // import { Skeleton, SkeletonStats,} from "../components/Skeleton";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import { getDashboard } from "../api/dashboard";
+
 import {
     getJobs,
     getPendingJobs,
     approveJob,
     rejectJob,
 } from "../api/jobs";
+
 import { getApplications } from "../api/applications";
 
 
@@ -63,7 +67,13 @@ const dummyActivity = [
 
 
 export default function Dashboard() {
-    const role = localStorage.getItem("wsaRole") || "admin";
+
+    const {
+        user,
+        loading: authLoading,
+    } = useAuth();
+
+    const role = user?.role;
 
 
     const [data, setData] = useState(null);
@@ -89,12 +99,25 @@ export default function Dashboard() {
     // --------------------------------------------------
 
     useEffect(() => {
+
+        if (authLoading || !role) {
+            return;
+        }
+
         async function loadDashboard() {
+
             try {
+
                 setLoading(true);
                 setError("");
 
+
+                // --------------------------------------------------
+                // ADMIN
+                // --------------------------------------------------
+
                 if (role === "admin") {
+
                     const [
                         dashboardData,
                         pendingResponse,
@@ -105,7 +128,9 @@ export default function Dashboard() {
                         getApplications(),
                     ]);
 
+
                     setData(dashboardData);
+
 
                     const jobData =
                         Array.isArray(pendingResponse)
@@ -114,31 +139,52 @@ export default function Dashboard() {
                             pendingResponse?.jobs ||
                             [];
 
+
                     const pending = jobData.filter(
                         (job) =>
-                            String(job.status || "").toLowerCase() ===
+                            String(
+                                job.status || ""
+                            ).toLowerCase() ===
                             "pending"
                     );
 
+
                     setPendingJobs(pending);
 
+
                     const applicationData =
-                        Array.isArray(applicationsResponse)
+                        Array.isArray(
+                            applicationsResponse
+                        )
                             ? applicationsResponse
                             : applicationsResponse?.data ||
                             applicationsResponse?.applications ||
                             [];
 
-                    setProfiles(applicationData);
+
+                    setProfiles(
+                        applicationData
+                    );
+
                     return;
                 }
 
-                // Associate users must not call the Admin-only /dashboard endpoint.
-                const [jobsResponse, applicationsResponse] =
-                    await Promise.all([
-                        getJobs(),
-                        getApplications(),
-                    ]);
+
+                // --------------------------------------------------
+                // ASSOCIATE
+                // --------------------------------------------------
+                // Associates must NOT call the
+                // Admin-only /dashboard endpoint.
+                // --------------------------------------------------
+
+                const [
+                    jobsResponse,
+                    applicationsResponse,
+                ] = await Promise.all([
+                    getJobs(),
+                    getApplications(),
+                ]);
+
 
                 const jobData =
                     Array.isArray(jobsResponse)
@@ -147,56 +193,98 @@ export default function Dashboard() {
                         jobsResponse?.jobs ||
                         [];
 
-                const approvedJobs = jobData.filter(
-                    (job) =>
-                        String(job.status || "").toLowerCase() ===
-                        "approved"
-                );
+
+                const approvedJobs =
+                    jobData.filter(
+                        (job) =>
+                            String(
+                                job.status || ""
+                            ).toLowerCase() ===
+                            "approved"
+                    );
+
 
                 const applicationData =
-                    Array.isArray(applicationsResponse)
+                    Array.isArray(
+                        applicationsResponse
+                    )
                         ? applicationsResponse
                         : applicationsResponse?.data ||
                         applicationsResponse?.applications ||
                         [];
 
-                setProfiles(applicationData);
+
+                setProfiles(
+                    applicationData
+                );
+
 
                 setData({
+
                     my_jobs: [],
-                    approved_jobs: approvedJobs,
-                    notifications: dummyActivity.map((activity) => ({
-                        id: activity.id,
-                        text: activity.title,
-                        date: activity.time,
-                        read: activity.id > 2,
-                    })),
-                    unread_notifications: dummyActivity
-                        .filter((activity) => activity.id <= 2)
-                        .map((activity) => ({
-                            id: activity.id,
-                            text: activity.title,
-                            date: activity.time,
-                            read: false,
-                        })),
+
+                    approved_jobs:
+                        approvedJobs,
+
+                    notifications:
+                        dummyActivity.map(
+                            (activity) => ({
+                                id: activity.id,
+                                text:
+                                    activity.title,
+                                date:
+                                    activity.time,
+                                read:
+                                    activity.id > 2,
+                            })
+                        ),
+
+                    unread_notifications:
+                        dummyActivity
+                            .filter(
+                                (activity) =>
+                                    activity.id <= 2
+                            )
+                            .map(
+                                (activity) => ({
+                                    id:
+                                        activity.id,
+                                    text:
+                                        activity.title,
+                                    date:
+                                        activity.time,
+                                    read: false,
+                                })
+                            ),
                 });
+
+
             } catch (error) {
+
                 console.error(
                     "Failed to load dashboard:",
                     error
                 );
 
+
                 setError(
                     error.data?.message ||
                     "Failed to load dashboard."
                 );
+
+
             } finally {
+
                 setLoading(false);
+
             }
         }
 
+
         loadDashboard();
-    }, [role]);
+
+    }, [role, authLoading]);
+
 
     // --------------------------------------------------
     // Approve Job
@@ -211,6 +299,7 @@ export default function Dashboard() {
 
             await approveJob(id);
 
+
             setPendingJobs(
                 (currentJobs) =>
                     currentJobs.filter(
@@ -219,6 +308,7 @@ export default function Dashboard() {
                     )
             );
 
+
         } catch (error) {
 
             console.error(
@@ -226,10 +316,12 @@ export default function Dashboard() {
                 error
             );
 
+
             setError(
                 error.data?.message ||
                 "Failed to approve job."
             );
+
 
         } finally {
 
@@ -253,6 +345,7 @@ export default function Dashboard() {
 
             await rejectJob(id);
 
+
             setPendingJobs(
                 (currentJobs) =>
                     currentJobs.filter(
@@ -261,6 +354,7 @@ export default function Dashboard() {
                     )
             );
 
+
         } catch (error) {
 
             console.error(
@@ -268,10 +362,12 @@ export default function Dashboard() {
                 error
             );
 
+
             setError(
                 error.data?.message ||
                 "Failed to reject job."
             );
+
 
         } finally {
 
@@ -283,11 +379,32 @@ export default function Dashboard() {
 
 
     // --------------------------------------------------
-    // Loading
+    // Authentication Loading
+    // --------------------------------------------------
+
+    if (authLoading || !role) {
+
+        return (
+            <DashboardSkeleton
+                role={role || "associate"}
+            />
+        );
+
+    }
+
+
+    // --------------------------------------------------
+    // Dashboard Loading
     // --------------------------------------------------
 
     if (loading) {
-        return <DashboardSkeleton role={role} />;
+
+        return (
+            <DashboardSkeleton
+                role={role}
+            />
+        );
+
     }
 
 
@@ -298,9 +415,13 @@ export default function Dashboard() {
     if (error) {
 
         return (
+
             <div className="flex min-h-[300px] items-center justify-center text-sm text-red-600">
+
                 {error}
+
             </div>
+
         );
 
     }
@@ -313,9 +434,13 @@ export default function Dashboard() {
     if (!data && role === "admin") {
 
         return (
+
             <div className="flex min-h-[300px] items-center justify-center text-sm text-[#52688f]">
+
                 No dashboard data available.
+
             </div>
+
         );
 
     }
@@ -349,6 +474,7 @@ export default function Dashboard() {
                         iconClass="bg-[#1f4fc7]"
                     />
 
+
                     <StatCard
                         title="Available Sponsored Jobs"
                         value={
@@ -359,6 +485,7 @@ export default function Dashboard() {
                         iconClass="bg-[#16a66f]"
                     />
 
+
                     <StatCard
                         title="Profiles Received"
                         value={
@@ -368,6 +495,7 @@ export default function Dashboard() {
                         icon="♙"
                         iconClass="bg-[#7354e8]"
                     />
+
 
                     <StatCard
                         title="Registered Associates"
@@ -395,21 +523,28 @@ export default function Dashboard() {
                         <PanelHeader
                             title="Pending Job Approval"
                             action={
+
                                 <Link
                                     to="/job-approvals"
                                     className="inline-flex h-[34px] items-center rounded-[9px] border border-[#d7e1ee] bg-white px-[11px] text-[13px] font-bold text-[#071d49] transition hover:bg-[#f4f7fb]"
                                 >
+
                                     View all
+
                                 </Link>
+
                             }
                         />
+
 
                         <div className="p-[18px]">
 
                             {pendingJobs.length === 0 ? (
 
                                 <div className="py-8 text-center text-sm text-[#52688f]">
+
                                     No pending jobs found.
+
                                 </div>
 
                             ) : (
@@ -453,6 +588,7 @@ export default function Dashboard() {
                             title="Recent Activity"
                         />
 
+
                         <div className="px-[18px]">
 
                             {dummyActivity.map(
@@ -466,10 +602,13 @@ export default function Dashboard() {
                                     >
 
                                         <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
+
                                             {
                                                 activity.icon
                                             }
+
                                         </div>
+
 
                                         <div className="min-w-0">
 
@@ -489,10 +628,13 @@ export default function Dashboard() {
 
                                             </p>
 
+
                                             <small className="text-[12px] text-[#52688f]">
+
                                                 {
                                                     activity.time
                                                 }
+
                                             </small>
 
                                         </div>
@@ -518,14 +660,19 @@ export default function Dashboard() {
                     <PanelHeader
                         title="Profiles Received"
                         action={
+
                             <Link
                                 to="/profiles"
                                 className="inline-flex h-[34px] items-center rounded-[9px] border border-[#d7e1ee] bg-white px-[11px] text-[13px] font-bold text-[#071d49] transition hover:bg-[#f4f7fb]"
                             >
+
                                 View all
+
                             </Link>
+
                         }
                     />
+
 
                     <div className="p-[18px]">
 
@@ -553,22 +700,24 @@ export default function Dashboard() {
     */
 
     const myJobs =
-        Array.isArray(data.my_jobs)
+        Array.isArray(data?.my_jobs)
             ? data.my_jobs
             : [];
 
+
     const approvedJobs =
-        Array.isArray(data.approved_jobs)
+        Array.isArray(data?.approved_jobs)
             ? data.approved_jobs
             : [];
 
+
     const unreadNotifications =
         Array.isArray(
-            data.unread_notifications
+            data?.unread_notifications
         )
             ? data.unread_notifications
             : (
-                data.notifications || []
+                data?.notifications || []
             ).filter(
                 (notification) =>
                     !notification.read
@@ -594,6 +743,7 @@ export default function Dashboard() {
                     iconClass="bg-[#1f4fc7]"
                 />
 
+
                 <StatCard
                     title="Pending Approval"
                     value={
@@ -609,6 +759,7 @@ export default function Dashboard() {
                     iconClass="bg-[#f5a313]"
                 />
 
+
                 <StatCard
                     title="Available Sponsored Jobs"
                     value={
@@ -617,6 +768,7 @@ export default function Dashboard() {
                     icon="✓"
                     iconClass="bg-[#16a66f]"
                 />
+
 
                 <StatCard
                     title="New Notifications"
@@ -643,14 +795,19 @@ export default function Dashboard() {
                     <PanelHeader
                         title="Recent Job Submissions"
                         action={
+
                             <Link
                                 to="/my-jobs"
                                 className="inline-flex h-[34px] items-center rounded-[9px] border border-[#d7e1ee] bg-white px-[11px] text-[13px] font-bold text-[#071d49] transition hover:bg-[#f4f7fb]"
                             >
+
                                 View all
+
                             </Link>
+
                         }
                     />
+
 
                     <div className="p-[18px]">
 
@@ -670,18 +827,23 @@ export default function Dashboard() {
                     <PanelHeader
                         title="Latest Notifications"
                         action={
+
                             <Link
                                 to="/notifications"
                                 className="inline-flex h-[34px] items-center rounded-[9px] border border-[#d7e1ee] bg-white px-[11px] text-[13px] font-bold text-[#071d49] transition hover:bg-[#f4f7fb]"
                             >
+
                                 View all
+
                             </Link>
+
                         }
                     />
 
+
                     <div className="p-[18px]">
 
-                        {(data.notifications || [])
+                        {(data?.notifications || [])
                             .slice(0, 5)
                             .map(
                                 (
@@ -696,15 +858,20 @@ export default function Dashboard() {
                                     >
 
                                         <strong className="block text-[14px] leading-[18px] text-[#071d49]">
+
                                             {
                                                 notification.text
                                             }
+
                                         </strong>
 
+
                                         <div className="mt-[4px] text-[12px] text-[#52688f]">
+
                                             {
                                                 notification.date
                                             }
+
                                         </div>
 
                                     </div>
@@ -728,14 +895,19 @@ export default function Dashboard() {
                 <PanelHeader
                     title="Available Sponsored Jobs"
                     action={
+
                         <Link
                             to="/sponsored-jobs"
                             className="inline-flex h-[32px] items-center rounded-[8px] bg-[#1d53c6] px-[11px] text-[12px] font-bold text-white transition hover:bg-[#1648b2]"
                         >
+
                             View Available Jobs
+
                         </Link>
+
                     }
                 />
+
 
                 <div className="px-[18px]">
 
@@ -749,17 +921,22 @@ export default function Dashboard() {
                             >
 
                                 <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[17px] text-[#1857c9]">
+
                                     ✓
+
                                 </div>
+
 
                                 <div className="min-w-0 flex-1">
 
                                     <p className="text-[13px] leading-[18px] text-[#071d49]">
 
                                         <strong className="font-bold">
+
                                             {
                                                 job.title
                                             }
+
                                         </strong>
 
                                         <br />
@@ -767,29 +944,39 @@ export default function Dashboard() {
                                         {
                                             job.location
                                         }
+
                                         {" · "}
+
                                         {
                                             job.type ||
                                             job.job_type
                                         }
+
                                         {" · "}
+
                                         {
                                             job.salary
                                         }
 
                                     </p>
 
+
                                     <small className="text-[12px] text-[#52688f]">
+
                                         Approved and available for profile submissions
+
                                     </small>
 
                                 </div>
+
 
                                 <button
                                     type="button"
                                     className="self-start rounded-[8px] bg-[#26b9dc] px-[12px] py-[10px] text-[12px] font-bold text-[#06204f] transition hover:bg-[#18acd1] sm:self-auto"
                                 >
+
                                     Submit Profile
+
                                 </button>
 
                             </div>
@@ -829,39 +1016,74 @@ export default function Dashboard() {
    ========================================================================== */
 
 function DashboardSkeleton({ role }) {
+
     const isAdmin = role === "admin";
 
     return (
+
         <div className="space-y-[18px]">
 
             {/* Page header */}
+
             <div className="flex items-start justify-between gap-4">
+
                 <div className="min-w-0 flex-1">
-                    {/* <Skeleton
-                        width="170px"
-                        height="28px"
-                        borderRadius="7px"
-                    /> */}
+
+                    <div className="h-[28px] w-[170px] animate-pulse rounded-[7px] bg-[#e5ebf4]" />
 
                     <div className="h-[10px]" />
 
-                    {/* <Skeleton
-                        width="310px"
-                        height="14px"
-                        borderRadius="6px"
-                    /> */}
+                    <div className="h-[14px] w-[310px] animate-pulse rounded-[6px] bg-[#e5ebf4]" />
+
                 </div>
+
             </div>
 
+
             {/* Statistics */}
-            {/* <SkeletonStats count={4} /> */}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+                {Array.from(
+                    { length: 4 },
+                    (_, index) => (
+
+                        <div
+                            key={index}
+                            className="rounded-[15px] border border-[#d9e2ef] bg-white px-[18px] py-[17px] shadow-[0_8px_24px_rgba(30,60,100,0.07)]"
+                        >
+
+                            <div className="flex items-center justify-between gap-3">
+
+                                <div className="min-w-0 flex-1">
+
+                                    <div className="h-[13px] w-[70%] animate-pulse rounded-[5px] bg-[#e5ebf4]" />
+
+                                    <div className="mt-[10px] h-[30px] w-[45%] animate-pulse rounded-[6px] bg-[#e5ebf4]" />
+
+                                </div>
+
+                                <div className="h-[49px] w-[49px] shrink-0 animate-pulse rounded-[14px] bg-[#e5ebf4]" />
+
+                            </div>
+
+                        </div>
+
+                    )
+                )}
+
+            </div>
+
 
             {isAdmin ? (
+
                 <>
+
                     {/* Pending Jobs + Recent Activity */}
+
                     <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-[1.65fr_1fr]">
 
-                        {/* <SkeletonPanel
+                        <SkeletonPanel
                             titleWidth="175px"
                             rows={5}
                             showActions
@@ -870,23 +1092,30 @@ function DashboardSkeleton({ role }) {
                         <SkeletonPanel
                             titleWidth="135px"
                             rows={5}
-                        /> */}
+                        />
 
                     </div>
 
+
                     {/* Profiles */}
-                    {/* <SkeletonPanel
+
+                    <SkeletonPanel
                         titleWidth="145px"
                         rows={5}
                         showActions
-                    /> */}
+                    />
+
                 </>
+
             ) : (
+
                 <>
+
                     {/* Recent Jobs + Notifications */}
+
                     <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-[1.65fr_1fr]">
 
-                        {/* <SkeletonPanel
+                        <SkeletonPanel
                             titleWidth="190px"
                             rows={5}
                             showActions
@@ -896,27 +1125,32 @@ function DashboardSkeleton({ role }) {
                             titleWidth="175px"
                             rows={5}
                             showActions
-                        /> */}
+                        />
 
                     </div>
 
+
                     {/* Available Sponsored Jobs */}
-                    {/* <SkeletonPanel
+
+                    <SkeletonPanel
                         titleWidth="205px"
                         rows={3}
                         showActions
                     />
 
+
                     {/* Notice */}
-                    {/* <Skeleton
-                        width="100%"
-                        height="72px"
-                        borderRadius="11px"
-                    />  */}
+
+                    <div className="h-[72px] w-full animate-pulse rounded-[11px] bg-[#e5ebf4]" />
+
                 </>
+
             )}
+
         </div>
+
     );
+
 }
 
 
@@ -925,93 +1159,96 @@ function SkeletonPanel({
     rows = 5,
     showActions = false,
 }) {
+
     return (
+
         <section className="overflow-hidden rounded-[15px] border border-[#d9e2ef] bg-white shadow-[0_8px_24px_rgba(30,60,100,0.07)]">
 
-            {/* Panel header */}
             <div className="flex min-h-[69px] items-center justify-between gap-3 border-b border-[#d9e2ef] px-[20px]">
 
-                <Skeleton
-                    width={titleWidth}
-                    height="20px"
-                    borderRadius="6px"
+                <div
+                    className="animate-pulse rounded-[6px] bg-[#e5ebf4]"
+                    style={{
+                        width: titleWidth,
+                        height: "20px",
+                    }}
                 />
 
                 {showActions && (
-                    <Skeleton
-                        width="72px"
-                        height="34px"
-                        borderRadius="9px"
-                    />
+
+                    <div className="h-[34px] w-[72px] animate-pulse rounded-[9px] bg-[#e5ebf4]" />
+
                 )}
 
             </div>
 
-            {/* Panel content */}
+
             <div className="px-[18px]">
 
                 {Array.from(
                     { length: rows },
                     (_, index) => (
+
                         <div
                             key={index}
                             className="flex items-center gap-3 border-b border-[#e7edf5] py-[15px] last:border-b-0"
                         >
 
-                            <Skeleton
-                                width="34px"
-                                height="34px"
-                                borderRadius="10px"
-                            />
+                            <div className="h-[34px] w-[34px] shrink-0 animate-pulse rounded-[10px] bg-[#e5ebf4]" />
+
 
                             <div className="min-w-0 flex-1">
 
-                                <Skeleton
-                                    width={
-                                        index % 2 === 0
-                                            ? "65%"
-                                            : "52%"
-                                    }
-                                    height="14px"
-                                    borderRadius="5px"
+                                <div
+                                    className="animate-pulse rounded-[5px] bg-[#e5ebf4]"
+                                    style={{
+                                        width:
+                                            index % 2 === 0
+                                                ? "65%"
+                                                : "52%",
+                                        height: "14px",
+                                    }}
                                 />
 
                                 <div className="h-[8px]" />
 
-                                <Skeleton
-                                    width={
-                                        index % 2 === 0
-                                            ? "42%"
-                                            : "35%"
-                                    }
-                                    height="12px"
-                                    borderRadius="5px"
+                                <div
+                                    className="animate-pulse rounded-[5px] bg-[#e5ebf4]"
+                                    style={{
+                                        width:
+                                            index % 2 === 0
+                                                ? "42%"
+                                                : "35%",
+                                        height: "12px",
+                                    }}
                                 />
 
                             </div>
 
+
                             {index < 3 && (
-                                <Skeleton
-                                    width="72px"
-                                    height="28px"
-                                    borderRadius="8px"
-                                />
+
+                                <div className="h-[28px] w-[72px] shrink-0 animate-pulse rounded-[8px] bg-[#e5ebf4]" />
+
                             )}
 
                         </div>
+
                     )
                 )}
 
             </div>
+
         </section>
+
     );
+
 }
 
 
 /* ==========================================================================
    Reusable Components
    ========================================================================== */
-
 
 function StatCard({
     title,
@@ -1029,19 +1266,27 @@ function StatCard({
                 <div className="min-w-0">
 
                     <h3 className="mb-[7px] truncate text-[13px] font-medium text-[#52688f]">
+
                         {title}
+
                     </h3>
 
+
                     <strong className="text-[30px] font-bold leading-none text-[#071d49]">
+
                         {value}
+
                     </strong>
 
                 </div>
 
+
                 <div
                     className={`flex h-[49px] w-[49px] shrink-0 items-center justify-center rounded-[14px] text-[25px] text-white ${iconClass}`}
                 >
+
                     {icon}
+
                 </div>
 
             </div>
@@ -1063,8 +1308,11 @@ function PanelHeader({
         <div className="flex min-h-[69px] items-center justify-between gap-3 border-b border-[#d9e2ef] px-[20px]">
 
             <h2 className="text-[18px] font-bold text-[#071d49]">
+
                 {title}
+
             </h2>
+
 
             {action}
 
@@ -1089,6 +1337,7 @@ function DashboardJobRow({
     const normalizedStatus =
         status.toLowerCase();
 
+
     return (
 
         <div className="flex flex-col gap-3 border-b border-[#e7edf5] py-[13px] last:border-b-0 sm:flex-row sm:items-center">
@@ -1098,17 +1347,23 @@ function DashboardJobRow({
             <div className="flex min-w-0 flex-1 items-start gap-3">
 
                 <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
+
                     ▤
+
                 </div>
+
 
                 <div className="min-w-0 flex-1">
 
                     <strong className="block text-[13px] font-bold text-[#071d49]">
+
                         {
                             job.title ||
                             "Untitled Job"
                         }
+
                     </strong>
+
 
                     <div className="truncate text-[12px] text-[#071d49]">
 
@@ -1128,6 +1383,7 @@ function DashboardJobRow({
                         }
 
                     </div>
+
 
                     {job.associate && (
 
@@ -1162,17 +1418,20 @@ function DashboardJobRow({
                     text-[12px]
                     font-bold
 
-                    ${normalizedStatus ===
+                    ${
+                        normalizedStatus ===
                         "approved"
-                        ? "bg-[#dcf5ea] text-[#07834f]"
-                        : normalizedStatus ===
-                            "rejected"
-                            ? "bg-[#fde5e5] text-[#c73737]"
-                            : "bg-[#fff1d1] text-[#a96b00]"
+                            ? "bg-[#dcf5ea] text-[#07834f]"
+                            : normalizedStatus ===
+                                "rejected"
+                                ? "bg-[#fde5e5] text-[#c73737]"
+                                : "bg-[#fff1d1] text-[#a96b00]"
                     }
                 `}
             >
+
                 {status}
+
             </span>
 
 
@@ -1243,7 +1502,9 @@ function DashboardJobRow({
                         disabled:opacity-60
                     "
                 >
+
                     Reject
+
                 </button>
 
             </div>
@@ -1264,12 +1525,15 @@ function MiniJobs({
         return (
 
             <div className="py-8 text-center text-sm text-[#52688f]">
+
                 No jobs found.
+
             </div>
 
         );
 
     }
+
 
     return (
 
@@ -1302,12 +1566,15 @@ function MiniProfiles({
         return (
 
             <div className="py-8 text-center text-sm text-[#52688f]">
+
                 No profiles found.
+
             </div>
 
         );
 
     }
+
 
     return (
 
@@ -1334,10 +1601,13 @@ function MiniProfiles({
                         <div className="min-w-0 flex-1">
 
                             <strong className="block text-[13px] font-bold text-[#071d49]">
+
                                 {
                                     profile.candidate_name
                                 }
+
                             </strong>
+
 
                             <div className="text-[12px] text-[#071d49]">
 
@@ -1355,11 +1625,14 @@ function MiniProfiles({
 
                             </div>
 
+
                             <div className="text-[12px] text-[#52688f]">
+
                                 {
                                     profile.status ||
                                     "Pending"
                                 }
+
                             </div>
 
                         </div>
@@ -1369,7 +1642,9 @@ function MiniProfiles({
                             to="/profiles"
                             className="self-start rounded-[8px] border border-[#d7e1ee] bg-white px-[11px] py-[7px] text-[12px] font-bold text-[#071d49] transition hover:bg-[#f4f7fb] sm:self-auto"
                         >
+
                             View
+
                         </Link>
 
                     </div>
@@ -1381,6 +1656,7 @@ function MiniProfiles({
     );
 
 }
+
 
 function getInitials(name = "") {
 
@@ -1394,4 +1670,5 @@ function getInitials(name = "") {
         )
         .join("")
         .toUpperCase();
+
 }
