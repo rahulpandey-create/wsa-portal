@@ -9,7 +9,17 @@ return new class extends Migration
     {
         DB::statement("
             ALTER TABLE candidate_applications
-            MODIFY status VARCHAR(255) NOT NULL DEFAULT 'pending'
+            ALTER COLUMN status TYPE VARCHAR(255)
+        ");
+
+        DB::statement("
+            ALTER TABLE candidate_applications
+            ALTER COLUMN status SET NOT NULL
+        ");
+
+        DB::statement("
+            ALTER TABLE candidate_applications
+            ALTER COLUMN status SET DEFAULT 'pending'
         ");
     }
 
@@ -17,8 +27,12 @@ return new class extends Migration
     {
         DB::statement("
             ALTER TABLE candidate_applications
-            MODIFY status ENUM('pending','selected','rejected')
-            NOT NULL DEFAULT 'pending'
+            ALTER COLUMN status DROP DEFAULT
+        ");
+
+        DB::statement("
+            ALTER TABLE candidate_applications
+            ALTER COLUMN status DROP NOT NULL
         ");
     }
 };
