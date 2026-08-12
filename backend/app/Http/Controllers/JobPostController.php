@@ -46,6 +46,20 @@ class JobPostController extends Controller
     }
 
 
+    public function myJobs(Request $request)
+{
+    $jobs = JobPost::where(
+        'user_id',
+        $request->user()->id
+    )
+    ->latest()
+    ->get();
+
+    return response()->json([
+        'data' => $jobs,
+    ]);
+}
+
     /**
      * Show the form for creating a new resource.
      */
@@ -72,6 +86,7 @@ class JobPostController extends Controller
         // $job = \App\Models\JobPost::create($validated);
         $jobPost = JobPost::create([
             ...$validated,
+            'user_id' => $request->user()->id,
             'status' => 'pending',
         ]);
         return response()->json([
