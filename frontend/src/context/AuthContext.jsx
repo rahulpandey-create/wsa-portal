@@ -7,6 +7,7 @@ import {
 
 import {
     login as loginRequest,
+    register as registerRequest,
     getCurrentUser,
     logout as logoutRequest,
 } from "../api/auth";
@@ -59,6 +60,32 @@ export function AuthProvider({ children }) {
         }
     };
 
+    const register = async (name, email, password) => {
+        setLoading(true);
+
+        try {
+            const response = await registerRequest(
+                name,
+                email,
+                password
+            );
+
+            localStorage.setItem(
+                "wsaToken",
+                response.token
+            );
+
+            const currentUser =
+                await getCurrentUser();
+
+            setUser(currentUser);
+
+            return currentUser;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logout = async () => {
         try {
             await logoutRequest();
@@ -74,6 +101,7 @@ export function AuthProvider({ children }) {
         user,
         loading,
         login,
+        register,
         logout,
         isAuthenticated: !!user,
     };

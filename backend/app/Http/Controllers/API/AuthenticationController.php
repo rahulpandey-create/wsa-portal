@@ -8,21 +8,31 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 class AuthenticationController extends Controller
 {
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|min:3|max:255',
-            'email' => 'required|email|unique:users|max:255',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'role' => 'associate',
-            'password' => Hash::make($request->password)
-        ]);
-        return response()->json(['message' => 'User registered successfully']);
-    }
+public function register(Request $request)
+{
+    $request->validate([
+        'name' => 'required|min:3|max:255',
+        'email' => 'required|email|unique:users|max:255',
+        'password' => 'required|string|min:6|confirmed',
+    ]);
+
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'role' => 'associate',
+        'password' => Hash::make($request->password),
+    ]);
+
+    $token = $user
+        ->createToken('API Token')
+        ->plainTextToken;
+
+    return response()->json([
+        'message' => 'User registered successfully',
+        'token' => $token,
+        'user' => $user,
+    ], 201);
+}
     public function login(Request $request)
     {
         $request->validate([
