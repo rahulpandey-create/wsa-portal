@@ -4,7 +4,6 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
     const navigate = useNavigate();
-
     const { register } = useAuth();
 
     const [form, setForm] = useState({
@@ -16,6 +15,9 @@ export default function Register() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] =
+        useState(false);
 
     const handleChange = (e) => {
         setForm((previous) => ({
@@ -45,9 +47,10 @@ export default function Register() {
                 form.email,
                 form.password
             );
-
-            navigate("/dashboard");
-
+            alert(
+                "Registration successful. Please verify your email before logging in."
+            );
+            navigate("/");
         } catch (error) {
             console.error(
                 "Registration failed:",
@@ -85,6 +88,25 @@ export default function Register() {
                         "0 10px 30px rgba(30, 60, 100, 0.08)",
                 }}
             >
+                {/* Back to Login */}
+                <div
+                    style={{
+                        marginBottom: "18px",
+                    }}
+                >
+                    <Link
+                        to="/"
+                        style={{
+                            color: "#1747b8",
+                            fontSize: "14px",
+                            fontWeight: "700",
+                            textDecoration: "none",
+                        }}
+                    >
+                        ← Back to Login
+                    </Link>
+                </div>
+
                 <h1
                     style={{
                         margin: "0 0 8px",
@@ -124,11 +146,8 @@ export default function Register() {
 
                 <form onSubmit={handleSubmit}>
 
-                    <div
-                        style={{
-                            marginBottom: "16px",
-                        }}
-                    >
+                    {/* Name */}
+                    <div style={{ marginBottom: "16px" }}>
                         <label>Name</label>
 
                         <input
@@ -141,19 +160,15 @@ export default function Register() {
                                 width: "100%",
                                 marginTop: "7px",
                                 padding: "11px 12px",
-                                border:
-                                    "1px solid #d9e2ef",
+                                border: "1px solid #d9e2ef",
                                 borderRadius: "8px",
                                 boxSizing: "border-box",
                             }}
                         />
                     </div>
 
-                    <div
-                        style={{
-                            marginBottom: "16px",
-                        }}
-                    >
+                    {/* Email */}
+                    <div style={{ marginBottom: "16px" }}>
                         <label>Email</label>
 
                         <input
@@ -166,68 +181,142 @@ export default function Register() {
                                 width: "100%",
                                 marginTop: "7px",
                                 padding: "11px 12px",
-                                border:
-                                    "1px solid #d9e2ef",
+                                border: "1px solid #d9e2ef",
                                 borderRadius: "8px",
                                 boxSizing: "border-box",
                             }}
                         />
                     </div>
 
-                    <div
-                        style={{
-                            marginBottom: "16px",
-                        }}
-                    >
+                    {/* Password */}
+                    <div style={{ marginBottom: "16px" }}>
                         <label>Password</label>
 
-                        <input
-                            type="password"
-                            name="password"
-                            value={form.password}
-                            onChange={handleChange}
-                            required
+                        <div
                             style={{
-                                width: "100%",
+                                position: "relative",
                                 marginTop: "7px",
-                                padding: "11px 12px",
-                                border:
-                                    "1px solid #d9e2ef",
-                                borderRadius: "8px",
-                                boxSizing: "border-box",
                             }}
-                        />
+                        >
+                            <input
+                                type={
+                                    showPassword
+                                        ? "text"
+                                        : "password"
+                                }
+                                name="password"
+                                value={form.password}
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    padding:
+                                        "11px 65px 11px 12px",
+                                    border:
+                                        "1px solid #d9e2ef",
+                                    borderRadius: "8px",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowPassword(
+                                        (previous) =>
+                                            !previous
+                                    )
+                                }
+                                style={{
+                                    position: "absolute",
+                                    right: "10px",
+                                    top: "50%",
+                                    transform:
+                                        "translateY(-50%)",
+                                    border: "none",
+                                    background:
+                                        "transparent",
+                                    color: "#112f80",
+                                    fontSize: "13px",
+                                    fontWeight: "700",
+                                    cursor: "pointer",
+                                    padding: "4px",
+                                }}
+                            >
+                                {showPassword
+                                    ? "Hide"
+                                    : "Show"}
+                            </button>
+                        </div>
                     </div>
 
-                    <div
-                        style={{
-                            marginBottom: "22px",
-                        }}
-                    >
+                    {/* Confirm Password */}
+                    <div style={{ marginBottom: "22px" }}>
                         <label>
                             Confirm Password
                         </label>
 
-                        <input
-                            type="password"
-                            name="password_confirmation"
-                            value={
-                                form.password_confirmation
-                            }
-                            onChange={handleChange}
-                            required
+                        <div
                             style={{
-                                width: "100%",
+                                position: "relative",
                                 marginTop: "7px",
-                                padding: "11px 12px",
-                                border:
-                                    "1px solid #d9e2ef",
-                                borderRadius: "8px",
-                                boxSizing: "border-box",
                             }}
-                        />
+                        >
+                            <input
+                                type={
+                                    showConfirmPassword
+                                        ? "text"
+                                        : "password"
+                                }
+                                name="password_confirmation"
+                                value={
+                                    form.password_confirmation
+                                }
+                                onChange={handleChange}
+                                required
+                                style={{
+                                    width: "100%",
+                                    padding:
+                                        "11px 65px 11px 12px",
+                                    border:
+                                        "1px solid #d9e2ef",
+                                    borderRadius: "8px",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowConfirmPassword(
+                                        (previous) =>
+                                            !previous
+                                    )
+                                }
+                                style={{
+                                    position: "absolute",
+                                    right: "10px",
+                                    top: "50%",
+                                    transform:
+                                        "translateY(-50%)",
+                                    border: "none",
+                                    background:
+                                        "transparent",
+                                    color: "#112f80",
+                                    fontSize: "13px",
+                                    fontWeight: "700",
+                                    cursor: "pointer",
+                                    padding: "4px",
+                                }}
+                            >
+                                {showConfirmPassword
+                                    ? "Hide"
+                                    : "Show"}
+                            </button>
+                        </div>
                     </div>
 
+                    {/* Submit */}
                     <button
                         type="submit"
                         disabled={loading}
@@ -243,9 +332,6 @@ export default function Register() {
                             cursor: loading
                                 ? "not-allowed"
                                 : "pointer",
-                            opacity: loading
-                                ? 0.7
-                                : 1,
                         }}
                     >
                         {loading

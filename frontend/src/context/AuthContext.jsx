@@ -61,30 +61,24 @@ export function AuthProvider({ children }) {
     };
 
     const register = async (name, email, password) => {
-        setLoading(true);
+    setLoading(true);
 
-        try {
-            const response = await registerRequest(
-                name,
-                email,
-                password
-            );
+    try {
+        const response = await registerRequest(
+            name,
+            email,
+            password
+        );
 
-            localStorage.setItem(
-                "wsaToken",
-                response.token
-            );
+        // Registration does NOT create a session.
+        // User must verify email and login separately.
 
-            const currentUser =
-                await getCurrentUser();
+        return response;
 
-            setUser(currentUser);
-
-            return currentUser;
-        } finally {
-            setLoading(false);
-        }
-    };
+    } finally {
+        setLoading(false);
+    }
+};
 
     const logout = async () => {
         try {

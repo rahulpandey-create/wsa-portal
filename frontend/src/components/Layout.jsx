@@ -2,37 +2,29 @@
 
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 
 export default function Layout() {
-    const [role, setRole] = useState(
-        localStorage.getItem("wsaRole") || "admin"
-    );
+    const { user } = useAuth();
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const switchRole = () => {
-        const newRole =
-            role === "admin"
-                ? "associate"
-                : "admin";
-
-        localStorage.setItem("wsaRole", newRole);
-        setRole(newRole);
-    };
+    // Authenticated user's role is the source of truth.
+    const role = user?.role || "associate";
 
     return (
         <div className="min-h-screen bg-[#f3f6fb]">
 
             <Sidebar
                 role={role}
-                switchRole={switchRole}
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
             />
 
-            <div className="min-h-screen md:ml-[84px] lg:ml-[250px]">
+            <div className="min-h-screen lg:ml-[250px]">
 
                 <Topbar
                     role={role}

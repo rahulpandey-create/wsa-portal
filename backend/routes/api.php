@@ -7,11 +7,54 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthenticationController;
 use App\Http\Controllers\JobPostController;
 use App\Http\Controllers\CandidateApplicationController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Support\Facades\URL;
+
 
 
 Route::post('register', [AuthenticationController::class, 'register']);
 Route::post('login', [AuthenticationController::class, 'login']);
 
+Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+
+    $user = User::findOrFail($id);
+
+    if (
+        !hash_equals(
+            sha1($user->getEmailForVerification()),
+            $hash
+        )
+    ) {
+        return response()->json([
+            'message' => 'Invalid verification link'
+        ], 403);
+    }
+
+    if (!$user->hasVerifiedEmail()) {
+        $user->markEmailAsVerified();
+    }
+
+    return redirect(
+        env('FRONTEND_URL') . '/email-verified'
+    );
+
+})->middleware('signed')
+    ->name('verification.verify');
+Route::post('/email/verification-notification', function (Request $request) {
+
+    if ($request->user()->hasVerifiedEmail()) {
+        return response()->json([
+            'message' => 'Email already verified.'
+        ]);
+    }
+
+    $request->user()->sendEmailVerificationNotification();
+
+    return response()->json([
+        'message' => 'Verification email sent.'
+    ]);
+
+})->middleware(['auth:sanctum']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
 

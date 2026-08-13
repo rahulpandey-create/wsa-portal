@@ -8,31 +8,28 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 class AuthenticationController extends Controller
 {
-public function register(Request $request)
-{
-    $request->validate([
-        'name' => 'required|min:3|max:255',
-        'email' => 'required|email|unique:users|max:255',
-        'password' => 'required|string|min:6|confirmed',
-    ]);
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|min:3|max:255',
+            'email' => 'required|email|unique:users|max:255',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
 
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'role' => 'associate',
-        'password' => Hash::make($request->password),
-    ]);
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => 'associate',
+            'password' => Hash::make($request->password),
+        ]);
 
-    $token = $user
-        ->createToken('API Token')
-        ->plainTextToken;
+        $user->sendEmailVerificationNotification();
 
-    return response()->json([
-        'message' => 'User registered successfully',
-        'token' => $token,
-        'user' => $user,
-    ], 201);
-}
+        return response()->json([
+            'message' => 'User registered successfully. Please verify your email before logging in.',
+            'user' => $user,
+        ], 201);
+    }
     public function login(Request $request)
     {
         $request->validate([
@@ -40,9 +37,20 @@ public function register(Request $request)
             'password' => 'required'
         ]);
         if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            return response()->json([
+                'message' => 'Invalid credentials'
+            ], 401);
         }
-        $token = Auth::user()->createToken('API Token')->plainTextToken;
+
+        $user = Auth::user();
+
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Please verify your email before logging in.'
+            ], 403);
+        }
+
+        $token = $user->createToken('API Token')->plainTextToken;
         return response()->json(['token' => $token]);
     }
     public function userInfo(Request $request)

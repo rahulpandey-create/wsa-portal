@@ -4,10 +4,11 @@ import logo from "../assets/images/download.png";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-    const { login, loading } = useAuth();
+    const { login, logout, loading } = useAuth();
     const navigate = useNavigate();
 
     const [error, setError] = useState("");
+    const [isAdminLogin, setIsAdminLogin] = useState(false);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -38,6 +39,17 @@ export default function Login() {
         setShowPassword((prev) => !prev);
     };
 
+    const switchLoginMode = () => {
+        setIsAdminLogin((prev) => !prev);
+        setError("");
+        setFormData({
+            email: "",
+            password: "",
+            remember: false,
+        });
+        setShowPassword(false);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -54,17 +66,35 @@ export default function Login() {
                 user
             );
 
-            if (user.role === "admin") {
+            // Admin Login mode only accepts Admin accounts.
+            if (isAdminLogin) {
+                if (user.role !== "admin") {
+                    await logout();
+
+                    setError(
+                        "Admin access required. Please use an administrator account."
+                    );
+
+                    return;
+                }
+
                 navigate("/dashboard");
-            } else if (
-                user.role === "associate"
-            ) {
-                navigate("/dashboard");
-            } else {
-                setError(
-                    "Unknown user role."
-                );
+                return;
             }
+
+            // Associate Login mode only accepts Associate accounts.
+            if (user.role !== "associate") {
+                await logout();
+
+                setError(
+                    "This account is not an Associate account. Please use Admin Login."
+                );
+
+                return;
+            }
+
+            navigate("/dashboard");
+
         } catch (error) {
             console.error(
                 "Login failed:",
@@ -72,8 +102,8 @@ export default function Login() {
             );
 
             setError(
-                error.data?.message ||
-                    "Invalid email or password."
+                error?.data?.message ||
+                "Invalid email or password."
             );
         }
     };
@@ -126,22 +156,20 @@ export default function Login() {
 
                     <h1 className="mb-[18px] mt-3 text-[58px] font-bold leading-[1.04] tracking-[-0.04em] text-[#09235f] max-[820px]:text-[45px] max-[480px]:text-[38px]">
 
-                        Welcome to the{" "}
+                        Welcome to{" "}
 
                         <span className="text-[#29c4e7]">
-                            Associate Portal
+                            {isAdminLogin
+                                ? "Admin Portal"
+                                : "Associate Portal"}
                         </span>
 
                     </h1>
 
                     <p className="max-w-[570px] text-[20px] leading-[1.5] text-[#40506b] max-[820px]:mx-auto">
-                        Secure access for approved
-                        Work & Study Australia
-                        Associates to create and
-                        submit jobs, view available
-                        sponsored jobs and submit
-                        suitable professional
-                        profiles.
+                        {isAdminLogin
+                            ? "Secure access for authorised Work & Study Australia administrators to manage associates, jobs, profiles and portal activity."
+                            : "Secure access for approved Work & Study Australia Associates to create and submit jobs, view available sponsored jobs and submit suitable professional profiles."}
                     </p>
 
                     <div className="mt-[30px] grid max-w-[570px] gap-4 max-[820px]:mx-auto">
@@ -157,13 +185,15 @@ export default function Login() {
                             <div>
 
                                 <strong className="mb-[2px] block text-[#112f80]">
-                                    Create or Upload Jobs
+                                    {isAdminLogin
+                                        ? "Manage Associates"
+                                        : "Create or Upload Jobs"}
                                 </strong>
 
                                 <span className="text-[14px] text-[#66738a]">
-                                    Submit vacancies to WSA
-                                    Admin for review and
-                                    approval.
+                                    {isAdminLogin
+                                        ? "Review and manage registered WSA Associates."
+                                        : "Submit vacancies to WSA Admin for review and approval."}
                                 </span>
 
                             </div>
@@ -181,14 +211,15 @@ export default function Login() {
                             <div>
 
                                 <strong className="mb-[2px] block text-[#112f80]">
-                                    View Available Sponsored
-                                    Jobs
+                                    {isAdminLogin
+                                        ? "Review Job Approvals"
+                                        : "View Available Sponsored Jobs"}
                                 </strong>
 
                                 <span className="text-[14px] text-[#66738a]">
-                                    Access all current
-                                    vacancies approved by WSA
-                                    Admin.
+                                    {isAdminLogin
+                                        ? "Review, approve or reject submitted job listings."
+                                        : "Access all current vacancies approved by WSA Admin."}
                                 </span>
 
                             </div>
@@ -206,13 +237,15 @@ export default function Login() {
                             <div>
 
                                 <strong className="mb-[2px] block text-[#112f80]">
-                                    Submit Profiles
+                                    {isAdminLogin
+                                        ? "Manage Profiles"
+                                        : "Submit Profiles"}
                                 </strong>
 
                                 <span className="text-[14px] text-[#66738a]">
-                                    Send professional profiles
-                                    or resumes securely
-                                    through the portal.
+                                    {isAdminLogin
+                                        ? "Access and manage professional profiles submitted through the portal."
+                                        : "Send professional profiles or resumes securely through the portal."}
                                 </span>
 
                             </div>
@@ -230,13 +263,15 @@ export default function Login() {
                             <div>
 
                                 <strong className="mb-[2px] block text-[#112f80]">
-                                    Receive Notifications
+                                    {isAdminLogin
+                                        ? "Monitor Portal Activity"
+                                        : "Receive Notifications"}
                                 </strong>
 
                                 <span className="text-[14px] text-[#66738a]">
-                                    Be notified whenever a new
-                                    job is approved and released
-                                    to the Associate network.
+                                    {isAdminLogin
+                                        ? "Monitor important portal notifications and activity."
+                                        : "Be notified whenever a new job is approved and released to the Associate network."}
                                 </span>
 
                             </div>
@@ -262,12 +297,15 @@ export default function Login() {
                         <div>
 
                             <h2 className="m-0 text-[30px] font-bold text-[#09235f]">
-                                Associate Login
+                                {isAdminLogin
+                                    ? "Admin Login"
+                                    : "Associate Login"}
                             </h2>
 
                             <div className="mt-1 text-[14px] text-[#66738a]">
-                                Sign in to your WSA B2B
-                                Portal account.
+                                {isAdminLogin
+                                    ? "Sign in to your WSA Administration Portal."
+                                    : "Sign in to your WSA B2B Portal account."}
                             </div>
 
                         </div>
@@ -282,7 +320,9 @@ export default function Login() {
                             htmlFor="email"
                             className="mb-[7px] mt-[18px] block text-[14px] font-extrabold text-[#112f80]"
                         >
-                            Email Address
+                            {isAdminLogin
+                                ? "Admin Email Address"
+                                : "Email Address"}
                         </label>
 
                         <input
@@ -290,7 +330,11 @@ export default function Login() {
                             name="email"
                             type="email"
                             autoComplete="email"
-                            placeholder="you@business.com"
+                            placeholder={
+                                isAdminLogin
+                                    ? "admin@business.com"
+                                    : "you@business.com"
+                            }
                             required
                             value={formData.email}
                             onChange={handleChange}
@@ -385,7 +429,9 @@ export default function Login() {
                         >
                             {loading
                                 ? "LOGGING IN..."
-                                : "LOG IN TO PORTAL →"}
+                                : isAdminLogin
+                                    ? "LOG IN AS ADMIN →"
+                                    : "LOG IN TO PORTAL →"}
                         </button>
 
                         {error && (
@@ -423,6 +469,22 @@ export default function Login() {
                         >
                             BECOME AN ASSOCIATE →
                         </Link>
+
+                    </div>
+
+                    {/* Admin Login Toggle */}
+
+                    <div className="mt-[18px] text-center">
+
+                        <button
+                            type="button"
+                            onClick={switchLoginMode}
+                            className="border-0 bg-transparent p-0 text-[13px] font-extrabold text-[#112f80] underline decoration-[#dbe3ee] underline-offset-4 transition-colors hover:text-[#29c4e7]"
+                        >
+                            {isAdminLogin
+                                ? "← Associate Login"
+                                : "Admin Login"}
+                        </button>
 
                     </div>
 
