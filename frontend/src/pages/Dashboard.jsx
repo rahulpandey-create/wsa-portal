@@ -16,55 +16,12 @@ import {
 
 import { getApplications } from "../api/applications";
 
+import { getNotifications } from "../api/notifications";
+
 
 // --------------------------------------------------
-// Dummy Recent Activity
-// Replace this with API data later.
+// Dashboard
 // --------------------------------------------------
-
-const dummyActivity = [
-    {
-        id: 1,
-        icon: "✓",
-        title: "Job approved",
-        description:
-            '"Frontend React Developer" was approved and is now available to Associates.',
-        time: "10 mins ago",
-    },
-    {
-        id: 2,
-        icon: "♙",
-        title: "New profile received",
-        description:
-            'A new student profile was submitted for "UI Designer".',
-        time: "25 mins ago",
-    },
-    {
-        id: 3,
-        icon: "▤",
-        title: "New job submitted",
-        description:
-            'A new job "Junior Web Developer" was submitted for approval.',
-        time: "42 mins ago",
-    },
-    {
-        id: 4,
-        icon: "✓",
-        title: "Job approved",
-        description:
-            '"Laravel Developer - QA" was approved by Admin.',
-        time: "1 hour ago",
-    },
-    {
-        id: 5,
-        icon: "♙",
-        title: "New profile received",
-        description:
-            "A new candidate profile was received from an Associate.",
-        time: "2 hours ago",
-    },
-];
-
 
 export default function Dashboard() {
 
@@ -82,6 +39,9 @@ export default function Dashboard() {
         useState([]);
 
     const [profiles, setProfiles] =
+        useState([]);
+
+    const [notifications, setNotifications] =
         useState([]);
 
     const [actionLoading, setActionLoading] =
@@ -110,6 +70,27 @@ export default function Dashboard() {
 
                 setLoading(true);
                 setError("");
+
+
+                // --------------------------------------------------
+                // Load real notifications for both roles
+                // --------------------------------------------------
+
+                const notificationsResponse =
+                    await getNotifications();
+
+                const notificationData =
+                    Array.isArray(
+                        notificationsResponse
+                    )
+                        ? notificationsResponse
+                        : notificationsResponse?.data ||
+                        notificationsResponse?.notifications ||
+                        [];
+
+                setNotifications(
+                    notificationData
+                );
 
 
                 // --------------------------------------------------
@@ -149,7 +130,9 @@ export default function Dashboard() {
                     );
 
 
-                    setPendingJobs(pending);
+                    setPendingJobs(
+                        pending
+                    );
 
 
                     const applicationData =
@@ -227,35 +210,14 @@ export default function Dashboard() {
                         approvedJobs,
 
                     notifications:
-                        dummyActivity.map(
-                            (activity) => ({
-                                id: activity.id,
-                                text:
-                                    activity.title,
-                                date:
-                                    activity.time,
-                                read:
-                                    activity.id > 2,
-                            })
-                        ),
+                        notificationData,
 
                     unread_notifications:
-                        dummyActivity
-                            .filter(
-                                (activity) =>
-                                    activity.id <= 2
-                            )
-                            .map(
-                                (activity) => ({
-                                    id:
-                                        activity.id,
-                                    text:
-                                        activity.title,
-                                    date:
-                                        activity.time,
-                                    read: false,
-                                })
-                            ),
+                        notificationData.filter(
+                            (notification) =>
+                                !notification.read
+                        ),
+
                 });
 
 
@@ -268,7 +230,8 @@ export default function Dashboard() {
 
 
                 setError(
-                    error.data?.message ||
+                    error?.data?.message ||
+                    error?.message ||
                     "Failed to load dashboard."
                 );
 
@@ -318,7 +281,8 @@ export default function Dashboard() {
 
 
             setError(
-                error.data?.message ||
+                error?.data?.message ||
+                error?.message ||
                 "Failed to approve job."
             );
 
@@ -364,7 +328,8 @@ export default function Dashboard() {
 
 
             setError(
-                error.data?.message ||
+                error?.data?.message ||
+                error?.message ||
                 "Failed to reject job."
             );
 
@@ -591,57 +556,84 @@ export default function Dashboard() {
 
                         <div className="px-[18px]">
 
-                            {dummyActivity.map(
-                                (activity) => (
+                            {notifications.length === 0 ? (
 
-                                    <div
-                                        key={
-                                            activity.id
-                                        }
-                                        className="flex gap-3 border-b border-[#e7edf5] py-[17px] last:border-b-0"
-                                    >
+                                <div className="py-8 text-center text-sm text-[#52688f]">
 
-                                        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
+                                    No recent activity.
 
-                                            {
-                                                activity.icon
-                                            }
+                                </div>
 
-                                        </div>
+                            ) : (
 
+                                notifications
+                                    .slice(0, 5)
+                                    .map(
+                                        (
+                                            notification
+                                        ) => (
 
-                                        <div className="min-w-0">
-
-                                            <p className="text-[13px] leading-[18px] text-[#071d49]">
-
-                                                <strong>
-                                                    {
-                                                        activity.title
-                                                    }
-                                                </strong>
-
-                                                <br />
-
-                                                {
-                                                    activity.description
+                                            <div
+                                                key={
+                                                    notification.id
                                                 }
+                                                className="flex gap-3 border-b border-[#e7edf5] py-[17px] last:border-b-0"
+                                            >
 
-                                            </p>
+                                                <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
+
+                                                    {notification.read
+                                                        ? "✓"
+                                                        : "🔔"}
+
+                                                </div>
 
 
-                                            <small className="text-[12px] text-[#52688f]">
+                                                <div className="min-w-0">
 
-                                                {
-                                                    activity.time
-                                                }
+                                                    <p className="text-[13px] leading-[18px] text-[#071d49]">
 
-                                            </small>
+                                                        <strong>
+                                                            {
+                                                                notification.title ||
+                                                                notification.text ||
+                                                                "Notification"
+                                                            }
+                                                        </strong>
 
-                                        </div>
+                                                        {notification.message && (
 
-                                    </div>
+                                                            <>
+                                                                <br />
 
-                                )
+                                                                {
+                                                                    notification.message
+                                                                }
+
+                                                            </>
+
+                                                        )}
+
+                                                    </p>
+
+
+                                                    <small className="text-[12px] text-[#52688f]">
+
+                                                        {
+                                                            notification.created_at ||
+                                                            notification.date ||
+                                                            ""
+                                                        }
+
+                                                    </small>
+
+                                                </div>
+
+                                            </div>
+
+                                        )
+                                    )
+
                             )}
 
                         </div>
@@ -860,16 +852,33 @@ export default function Dashboard() {
                                         <strong className="block text-[14px] leading-[18px] text-[#071d49]">
 
                                             {
-                                                notification.text
+                                                notification.title ||
+                                                notification.text ||
+                                                "Notification"
                                             }
 
                                         </strong>
 
 
+                                        {notification.message && (
+
+                                            <div className="mt-[4px] text-[12px] text-[#52688f]">
+
+                                                {
+                                                    notification.message
+                                                }
+
+                                            </div>
+
+                                        )}
+
+
                                         <div className="mt-[4px] text-[12px] text-[#52688f]">
 
                                             {
-                                                notification.date
+                                                notification.created_at ||
+                                                notification.date ||
+                                                ""
                                             }
 
                                         </div>

@@ -409,7 +409,7 @@ export default function Login() {
                             className="mb-[7px] mt-[18px] block text-[14px] font-extrabold text-[#112f80]"
                         >
                             {isAdminLogin
-                                ? "Admin Email Address"
+                                ? "Email Address"
                                 : "Email Address"}
                         </label>
 
