@@ -88,6 +88,11 @@ export default function App() {
                     />
 
                     <Route
+                        path="/create-sponsored-job"
+                        element={<CreateJob sponsored={true} />}
+                    />
+
+                    <Route
                         path="/upload-job"
                         element={<UploadJob />}
                     />

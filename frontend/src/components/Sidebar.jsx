@@ -35,6 +35,11 @@ export default function Sidebar({
             label: "Profiles Received",
         },
         {
+            path: "/create-sponsored-job",
+            icon: "★",
+            label: "Create Sponsored Job",
+        },
+        {
             path: "/notifications",
             icon: "🔔",
             label: "Notifications",
@@ -115,7 +120,6 @@ export default function Sidebar({
                         : "-translate-x-full lg:translate-x-0",
                 ].join(" ")}
             >
-
                 {/* Logo */}
                 <div
                     className="
@@ -172,7 +176,6 @@ export default function Sidebar({
                     "
                 >
                     <div className="flex flex-col gap-[4px]">
-
                         {menu.map((item) => (
                             <NavLink
                                 key={item.path}
@@ -211,10 +214,8 @@ export default function Sidebar({
                                 </span>
                             </NavLink>
                         ))}
-
                     </div>
                 </nav>
-
             </aside>
         </>
     );
@@ -234,6 +235,7 @@ export const getPageTitle = (pathname) => {
         "/profiles": "Profiles Received",
         "/notifications": "Notifications",
         "/create-job": "Create Job",
+        "/create-sponsored-job": "Create Sponsored Job",
         "/upload-job": "Upload Job",
         "/my-jobs": "My Jobs",
         "/sponsored-jobs": "View Available Sponsored Jobs",
@@ -266,6 +268,7 @@ export const adminRoutes = [
     "/jobs",
     "/associates",
     "/profiles",
+    "/create-sponsored-job",
     "/notifications",
 ];
 
