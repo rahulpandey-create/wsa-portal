@@ -71,6 +71,36 @@ class JobPostController extends Controller
         //
     }
 
+    public function createSponsored(Request $request)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json([
+                'message' => 'Only administrators can create sponsored jobs.'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'company' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'salary' => 'nullable|numeric',
+            'job_type' => 'required|string|max:100',
+            'description' => 'required|string',
+        ]);
+
+        $jobPost = JobPost::create([
+            ...$validated,
+            'user_id' => $request->user()->id,
+            'status' => 'approved',
+            'is_sponsored' => true,
+        ]);
+
+        return response()->json([
+            'message' => 'Sponsored job created successfully.',
+            'data' => new JobPostResource($jobPost),
+        ], 201);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -97,6 +127,7 @@ class JobPostController extends Controller
             'data' => new JobPostResource($jobPost), // Load the user relationship
         ], 201);
     }
+    
 
     public function upload(Request $request)
     {

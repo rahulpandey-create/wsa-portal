@@ -16,6 +16,10 @@ class JobPost extends Model
         'job_type',
         'description',
         'status',
+        'is_sponsored',
+    ];
+    protected $casts = [
+        'is_sponsored' => 'boolean',
     ];
     public function candidateApplications(): HasMany
     {

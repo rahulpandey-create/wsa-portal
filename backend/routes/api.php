@@ -174,6 +174,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
             [JobPostController::class, 'upload']
         );
 
+        Route::post(
+            'job-posts/sponsored',
+            [JobPostController::class, 'createSponsored']
+        );
+
         Route::get('associates', function () {
             return response()->json(
                 User::where('role', 'associate')->get()
