@@ -1,9 +1,12 @@
 // src/pages/CreateJob.jsx
 
 import { useState } from "react";
-import { createJob } from "../api/jobs";
+import {
+    createJob,
+    createSponsoredJob,
+} from "../api/jobs";
 
-export default function CreateJob() {
+export default function CreateJob({ sponsored = false }) {
     const initialForm = {
         title: "",
         company: "",
@@ -35,69 +38,93 @@ export default function CreateJob() {
 
         if (!form.confirmation) {
             alert(
-                "Please confirm that the job information is accurate and you are authorised to submit it."
+                sponsored
+                    ? "Please confirm that the sponsored job information is accurate."
+                    : "Please confirm that the job information is accurate and you are authorised to submit it."
             );
+
             return;
         }
 
         try {
-            /*
-             * Send only fields currently supported by the backend.
-             * The additional UI fields remain available for future
-             * backend integration.
-             */
-            await createJob({
+            const jobData = {
                 title: form.title,
                 company: form.company,
                 location: form.location,
                 job_type: form.job_type,
                 salary: form.salary,
                 description: form.description,
-            });
+            };
 
-            alert(
-                "Job submitted successfully. It is now awaiting Admin approval."
-            );
+            if (sponsored) {
+                await createSponsoredJob(jobData);
+
+                alert(
+                    "Sponsored job created successfully."
+                );
+            } else {
+                await createJob(jobData);
+
+                alert(
+                    "Job submitted successfully. It is now awaiting Admin approval."
+                );
+            }
 
             setForm(initialForm);
         } catch (error) {
-            console.error("Failed to create job:", error);
+            console.error(
+                sponsored
+                    ? "Failed to create sponsored job:"
+                    : "Failed to create job:",
+                error
+            );
 
             alert(
-                error.data?.message ||
-                    "Failed to submit job."
+                error?.data?.message ||
+                    (
+                        sponsored
+                            ? "Failed to create sponsored job."
+                            : "Failed to submit job."
+                    )
             );
         }
     };
 
     return (
         <>
+            {/* Page Header */}
             <div className="page-header">
                 <div>
                     <h2
-                    style={{
-                fontSize: "28px",
-                fontWeight: "700",
-                lineHeight: "1.2",
-                margin: 0,
-            }}>
-                Create a Job
-                </h2>
+                        style={{
+                            fontSize: "28px",
+                            fontWeight: "700",
+                            lineHeight: "1.2",
+                            margin: 0,
+                        }}
+                    >
+                        {sponsored
+                            ? "Create Sponsored Job"
+                            : "Create a Job"}
+                    </h2>
 
                     <p>
-                        Complete all required fields before
-                        submitting to Admin.
+                        {sponsored
+                            ? "Complete all required fields to publish a sponsored job."
+                            : "Complete all required fields before submitting to Admin."}
                     </p>
                 </div>
             </div>
 
+            {/* Form Card */}
             <div
                 style={{
                     background: "#ffffff",
                     border: "1px solid #d9e2ef",
                     borderRadius: "16px",
                     padding: "18px",
-                    boxShadow: "0 8px 24px rgba(15, 35, 75, 0.05)",
+                    boxShadow:
+                        "0 8px 24px rgba(15, 35, 75, 0.05)",
                 }}
             >
                 <form onSubmit={handleSubmit}>
@@ -551,9 +578,9 @@ export default function CreateJob() {
                                     cursor: "pointer",
                                 }}
                             >
-                                I confirm that the job information is
-                                accurate and I am authorised to submit
-                                it for Admin approval.
+                                {sponsored
+                                    ? "I confirm that the sponsored job information is accurate and authorised for publication."
+                                    : "I confirm that the job information is accurate and I am authorised to submit it for Admin approval."}
                             </label>
                         </div>
 
@@ -577,7 +604,9 @@ export default function CreateJob() {
                                     cursor: "pointer",
                                 }}
                             >
-                                Submit Job for Admin Approval
+                                {sponsored
+                                    ? "Create Sponsored Job"
+                                    : "Submit Job for Admin Approval"}
                             </button>
                         </div>
                     </div>

@@ -27,6 +27,13 @@ export async function createJob(jobData) {
     });
 }
 
+export async function createSponsoredJob(jobData) {
+    return apiRequest("/job-posts/sponsored", {
+        method: "POST",
+        body: JSON.stringify(jobData),
+    });
+}
+
 export async function getMyJobs() {
     return apiRequest("/my-jobs");
 }
