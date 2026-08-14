@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Notifications\JobApprovedNotification;
+use Illuminate\Support\Facades\DB;
 use App\Models\JobPost;
 use App\Http\Requests\StoreJobPostRequest;
 use App\Http\Requests\UpdateJobPostRequest;
@@ -47,18 +50,18 @@ class JobPostController extends Controller
 
 
     public function myJobs(Request $request)
-{
-    $jobs = JobPost::where(
-        'user_id',
-        $request->user()->id
-    )
-    ->latest()
-    ->get();
+    {
+        $jobs = JobPost::where(
+            'user_id',
+            $request->user()->id
+        )
+            ->latest()
+            ->get();
 
-    return response()->json([
-        'data' => $jobs,
-    ]);
-}
+        return response()->json([
+            'data' => $jobs,
+        ]);
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -90,88 +93,88 @@ class JobPostController extends Controller
             'status' => 'pending',
         ]);
         return response()->json([
-    'message' => 'Job created successfully',
-    'data' => new JobPostResource($jobPost), // Load the user relationship
-], 201);
+            'message' => 'Job created successfully',
+            'data' => new JobPostResource($jobPost), // Load the user relationship
+        ], 201);
     }
 
-public function upload(Request $request)
-{
-    $request->validate([
-        'file' => 'required|file|mimes:csv,xlsx,xls|max:5120',
-    ]);
-
-    $file = $request->file('file');
-
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(
-        $file->getPathname()
-    );
-
-    $sheet = $spreadsheet->getActiveSheet();
-
-    $rows = $sheet->toArray();
-
-    if (count($rows) < 2) {
-        return response()->json([
-            'message' => 'The uploaded file contains no job records.'
-        ], 422);
-    }
-
-    $headers = array_map(
-        fn ($header) => strtolower(trim($header)),
-        $rows[0]
-    );
-
-    $requiredHeaders = [
-        'title',
-        'company',
-        'location',
-        'salary',
-        'job_type',
-        'description',
-    ];
-
-    foreach ($requiredHeaders as $header) {
-        if (!in_array($header, $headers)) {
-            return response()->json([
-                'message' => "Missing required column: {$header}"
-            ], 422);
-        }
-    }
-
-    $created = [];
-
-    foreach (array_slice($rows, 1) as $row) {
-        $data = array_combine($headers, $row);
-
-        if (
-            empty($data['title']) ||
-            empty($data['company']) ||
-            empty($data['location']) ||
-            empty($data['job_type']) ||
-            empty($data['description'])
-        ) {
-            continue;
-        }
-
-        $jobPost = JobPost::create([
-            'title' => $data['title'],
-            'company' => $data['company'],
-            'location' => $data['location'],
-            'salary' => $data['salary'] ?: null,
-            'job_type' => $data['job_type'],
-            'description' => $data['description'],
-            'status' => 'pending',
+    public function upload(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx,xls|max:5120',
         ]);
 
-        $created[] = $jobPost;
-    }
+        $file = $request->file('file');
 
-    return response()->json([
-        'message' => count($created) . ' jobs uploaded successfully.',
-        'data' => JobPostResource::collection($created),
-    ], 201);
-}
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load(
+            $file->getPathname()
+        );
+
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $rows = $sheet->toArray();
+
+        if (count($rows) < 2) {
+            return response()->json([
+                'message' => 'The uploaded file contains no job records.'
+            ], 422);
+        }
+
+        $headers = array_map(
+            fn($header) => strtolower(trim($header)),
+            $rows[0]
+        );
+
+        $requiredHeaders = [
+            'title',
+            'company',
+            'location',
+            'salary',
+            'job_type',
+            'description',
+        ];
+
+        foreach ($requiredHeaders as $header) {
+            if (!in_array($header, $headers)) {
+                return response()->json([
+                    'message' => "Missing required column: {$header}"
+                ], 422);
+            }
+        }
+
+        $created = [];
+
+        foreach (array_slice($rows, 1) as $row) {
+            $data = array_combine($headers, $row);
+
+            if (
+                empty($data['title']) ||
+                empty($data['company']) ||
+                empty($data['location']) ||
+                empty($data['job_type']) ||
+                empty($data['description'])
+            ) {
+                continue;
+            }
+
+            $jobPost = JobPost::create([
+                'title' => $data['title'],
+                'company' => $data['company'],
+                'location' => $data['location'],
+                'salary' => $data['salary'] ?: null,
+                'job_type' => $data['job_type'],
+                'description' => $data['description'],
+                'status' => 'pending',
+            ]);
+
+            $created[] = $jobPost;
+        }
+
+        return response()->json([
+            'message' => count($created) . ' jobs uploaded successfully.',
+            'data' => JobPostResource::collection($created),
+        ], 201);
+    }
 
 
     /**
@@ -215,12 +218,23 @@ public function upload(Request $request)
     }
     public function approve(JobPost $jobPost)
     {
-        $jobPost->status = 'approved';
-        $jobPost->save();
+        DB::transaction(function () use ($jobPost) {
+
+            $jobPost->status = 'approved';
+            $jobPost->save();
+
+            $associates = User::where('role', 'associate')->get();
+
+            foreach ($associates as $associate) {
+                $associate->notify(
+                    new JobApprovedNotification($jobPost)
+                );
+            }
+        });
 
         return response()->json([
             'message' => 'Job approved successfully',
-            'data' => new JobPostResource($jobPost) 
+            'data' => new JobPostResource($jobPost),
         ]);
     }
 

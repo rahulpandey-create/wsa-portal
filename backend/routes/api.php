@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthenticationController;
 use App\Http\Controllers\JobPostController;
 use App\Http\Controllers\CandidateApplicationController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\URL;
 
@@ -63,6 +64,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
     | Authenticated Routes
     |--------------------------------------------------------------------------
     */
+
+    Route::get(
+        'notifications',
+        [NotificationController::class, 'index']
+    );
+
+    Route::patch(
+        'notifications/read-all',
+        [NotificationController::class, 'markAllAsRead']
+    );
+
+    Route::patch(
+        'notifications/{notification}/read',
+        [NotificationController::class, 'markAsRead']
+    );
 
     Route::get('my-jobs', [JobPostController::class, 'myJobs']);
 

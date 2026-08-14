@@ -1,46 +1,100 @@
 // src/pages/Notifications.jsx
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+    getNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+} from "../api/notifications";
 
 export default function Notifications() {
-    const [notifications, setNotifications] = useState([
-        {
-            id: 1,
-            text: 'New job “Tax Accountant – Perth, WA” has been approved.',
-            date: "8/11/2026, 4:08:56 PM",
-            read: false,
-        },
-        {
-            id: 2,
-            text: 'New job “Tax Accountant – Perth, WA” has been approved.',
-            date: "8/11/2026, 3:52:39 PM",
-            read: false,
-        },
-        {
-            id: 3,
-            text: 'New job “Registered Nurse – Brisbane” has been approved.',
-            date: "2026-07-18 16:20",
-            read: true,
-        },
-        {
-            id: 4,
-            text: 'New job “Civil Engineer – Melbourne” has been approved.',
-            date: "2026-07-19 09:15",
-            read: true,
-        },
-    ]);
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        async function loadNotifications() {
+            try {
+                setLoading(true);
+                setError("");
+
+                const response = await getNotifications();
+
+                setNotifications(
+                    response?.data || []
+                );
+            } catch (error) {
+                console.error(
+                    "Failed to load notifications:",
+                    error
+                );
+
+                setError(
+                    error?.data?.message ||
+                    "Failed to load notifications."
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        loadNotifications();
+    }, []);
 
     const unreadCount = notifications.filter(
         (notification) => !notification.read
     ).length;
 
-    const handleMarkAllRead = () => {
-        setNotifications((current) =>
-            current.map((notification) => ({
-                ...notification,
-                read: true,
-            }))
-        );
+    const handleMarkAllRead = async () => {
+        if (unreadCount === 0) {
+            return;
+        }
+
+        try {
+            await markAllNotificationsAsRead();
+
+            setNotifications((current) =>
+                current.map((notification) => ({
+                    ...notification,
+                    read: true,
+                }))
+            );
+        } catch (error) {
+            console.error(
+                "Failed to mark all notifications as read:",
+                error
+            );
+        }
+    };
+
+    const handleNotificationClick = async (
+        notification
+    ) => {
+        if (notification.read) {
+            return;
+        }
+
+        try {
+            await markNotificationAsRead(
+                notification.id
+            );
+
+            setNotifications((current) =>
+                current.map((item) =>
+                    item.id === notification.id
+                        ? {
+                              ...item,
+                              read: true,
+                          }
+                        : item
+                )
+            );
+        } catch (error) {
+            console.error(
+                "Failed to mark notification as read:",
+                error
+            );
+        }
     };
 
     return (
@@ -60,42 +114,70 @@ export default function Notifications() {
                 <button
                     type="button"
                     onClick={handleMarkAllRead}
-                    disabled={unreadCount === 0}
+                    disabled={
+                        loading ||
+                        unreadCount === 0
+                    }
                     className="shrink-0 rounded-[8px] border border-[#d5dfec] bg-white px-[13px] py-[9px] text-[16px] font-bold text-[#071d41] transition hover:bg-[#f5f8fc] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Mark all read
                 </button>
             </div>
 
-            {/* Notifications */}
-            <div className="flex flex-col gap-[10px]">
-                {notifications.length === 0 ? (
-                    <div className="rounded-[10px] border border-[#d8e2ef] bg-white px-5 py-10 text-center text-[14px] text-[#52688f]">
-                        No notifications found.
-                    </div>
-                ) : (
-                    notifications.map((notification) => (
-                        <div
-                            key={notification.id}
-                            className={[
-                                "rounded-[10px] border bg-white px-[14px] py-[11px]",
-                                "transition-all",
-                                notification.read
-                                    ? "border-[#d8e2ef]"
-                                    : "border-[#d8e2ef] border-l-[4px] border-l-[#2160c9]",
-                            ].join(" ")}
-                        >
-                            <div className="text-[16px] font-bold leading-[1.35] text-[#071d41]">
-                                {notification.text}
-                            </div>
+            {/* Error */}
+            {error && (
+                <div className="mb-4 rounded-[10px] border border-red-200 bg-red-50 px-5 py-4 text-[14px] text-red-700">
+                    {error}
+                </div>
+            )}
 
-                            <div className="mt-[3px] text-[12px] text-[#52688f]">
-                                {notification.date}
-                            </div>
+            {/* Loading */}
+            {loading ? (
+                <div className="rounded-[10px] border border-[#d8e2ef] bg-white px-5 py-10 text-center text-[14px] text-[#52688f]">
+                    Loading notifications...
+                </div>
+            ) : (
+                <div className="flex flex-col gap-[10px]">
+                    {notifications.length === 0 ? (
+                        <div className="rounded-[10px] border border-[#d8e2ef] bg-white px-5 py-10 text-center text-[14px] text-[#52688f]">
+                            No notifications found.
                         </div>
-                    ))
-                )}
-            </div>
+                    ) : (
+                        notifications.map(
+                            (notification) => (
+                                <button
+                                    key={notification.id}
+                                    type="button"
+                                    onClick={() =>
+                                        handleNotificationClick(
+                                            notification
+                                        )
+                                    }
+                                    className={[
+                                        "w-full text-left rounded-[10px] border bg-white px-[14px] py-[11px]",
+                                        "transition-all hover:bg-[#f8faff]",
+                                        notification.read
+                                            ? "border-[#d8e2ef]"
+                                            : "border-[#d8e2ef] border-l-[4px] border-l-[#2160c9]",
+                                    ].join(" ")}
+                                >
+                                    <div className="text-[16px] font-bold leading-[1.35] text-[#071d41]">
+                                        {notification.title}
+                                    </div>
+
+                                    <div className="mt-[3px] text-[13px] leading-[1.4] text-[#52688f]">
+                                        {notification.message}
+                                    </div>
+
+                                    <div className="mt-[3px] text-[12px] text-[#52688f]">
+                                        {notification.created_at}
+                                    </div>
+                                </button>
+                            )
+                        )
+                    )}
+                </div>
+            )}
         </>
     );
 }
