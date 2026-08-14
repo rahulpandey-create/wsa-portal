@@ -30,7 +30,7 @@ class AuthenticationController extends Controller
             'user' => $user,
         ], 201);
     }
-    public function login(Request $request)
+ public function login(Request $request)
 {
     $request->validate([
         'email' => 'required|email',
@@ -44,18 +44,6 @@ class AuthenticationController extends Controller
     }
 
     $user = Auth::user();
-
-    // Email verification is enforced only in production.
-    // Local development allows direct login.
-    if (
-        app()->environment('production') &&
-        $user->role === 'associate' &&
-        !$user->hasVerifiedEmail()
-    ) {
-        return response()->json([
-            'message' => 'Please verify your email before logging in.'
-        ], 403);
-    }
 
     $token = $user->createToken('API Token')->plainTextToken;
 
