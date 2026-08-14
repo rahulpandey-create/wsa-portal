@@ -132,7 +132,7 @@ export default function Login() {
                     />
 
                     <a
-                        href="#"
+                        href="https://www.workstudy-australia.com.au/"
                         className="text-[14px] font-extrabold text-[#112f80] no-underline transition-colors hover:text-[#29c4e7]"
                     >
                         ← Back to WSA Website
@@ -285,6 +285,94 @@ export default function Login() {
                 {/* Login Card */}
 
                 <section className="rounded-[24px] border border-[#e0e7f0] bg-white p-[38px] shadow-[0_24px_65px_rgba(15,44,101,.13)] max-[480px]:rounded-[18px] max-[480px]:p-[26px_20px]">
+                    
+                   {/* Login Mode Toggle */}
+
+<div className="mt-[8px] mb-[4px] flex justify-center">
+    <div
+        className="
+            relative
+            flex
+            w-[200px]
+            -translate-y-[4px]
+            items-center
+            rounded-full
+            border
+            border-[#d5dfec]
+            bg-[#f3f6fb]
+            p-[3px]
+        "
+    >
+        {/* Sliding Active Indicator */}
+        <div
+            className={[
+                "absolute",
+                "left-[3px]",
+                "top-[4px]",
+                "h-[34px]",
+                "w-[96px]",
+                "rounded-full",
+                "bg-[#123b92]",
+                "transition-transform",
+                "duration-[450ms]",
+                "ease-[cubic-bezier(0.25,0.8,0.25,1)]",
+                "will-change-transform",
+            ].join(" ")}
+            style={{
+                transform: isAdminLogin
+                    ? "translateX(98px)"
+                    : "translateX(0)",
+            }}
+        />
+
+        {/* Associate */}
+        <button
+            type="button"
+            onClick={() => {
+                if (isAdminLogin) {
+                    switchLoginMode();
+                }
+            }}
+            className={[
+                "relative z-10",
+                "flex-1",
+                "rounded-full",
+                "px-[12px] py-[8px]",
+                "text-[13px] font-extrabold",
+                "transition-colors duration-[250ms]",
+                "outline-none",
+                isAdminLogin
+                    ? "text-[#52688f]"
+                    : "text-white",
+            ].join(" ")}
+        >
+            Associate
+        </button>
+
+        {/* Admin */}
+        <button
+            type="button"
+            onClick={() => {
+                if (!isAdminLogin) {
+                    switchLoginMode();
+                }
+            }}
+            className={[
+                "relative z-10",
+                "flex-1",
+                "rounded-full",
+                "px-[12px] py-[8px]",
+                "text-[13px] font-extrabold",
+                "transition-colors duration-[250ms]",
+                isAdminLogin
+                    ? "text-white"
+                    : "text-[#52688f]",
+            ].join(" ")}
+        >
+            Admin
+        </button>
+    </div>
+</div>
 
                     {/* Portal Mark */}
 
@@ -472,21 +560,6 @@ export default function Login() {
 
                     </div>
 
-                    {/* Admin Login Toggle */}
-
-                    <div className="mt-[18px] text-center">
-
-                        <button
-                            type="button"
-                            onClick={switchLoginMode}
-                            className="border-0 bg-transparent p-0 text-[13px] font-extrabold text-[#112f80] underline decoration-[#dbe3ee] underline-offset-4 transition-colors hover:text-[#29c4e7]"
-                        >
-                            {isAdminLogin
-                                ? "← Associate Login"
-                                : "Admin Login"}
-                        </button>
-
-                    </div>
 
                     {/* Security */}
 
