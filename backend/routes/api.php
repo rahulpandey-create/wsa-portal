@@ -10,11 +10,39 @@ use App\Http\Controllers\CandidateApplicationController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Hash;
 
 
 
 Route::post('register', [AuthenticationController::class, 'register']);
 Route::post('login', [AuthenticationController::class, 'login']);
+
+Route::post('/setup-admin', function (Request $request) {
+    $request->validate([
+        'secret' => 'required|string',
+        'name' => 'required|string',
+        'email' => 'required|email',
+        'password' => 'required|string|min:8',
+    ]);
+
+    if ($request->secret !== env('ADMIN_SETUP_SECRET')) {
+        return response()->json([
+            'message' => 'Unauthorized'
+        ], 403);
+    }
+
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => 'admin',
+    ]);
+
+    return response()->json([
+        'message' => 'Admin created successfully',
+        'user' => $user,
+    ], 201);
+});
 
 Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
 
