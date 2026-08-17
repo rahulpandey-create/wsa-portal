@@ -14,6 +14,9 @@ import {
 
 const AuthContext = createContext(null);
 
+const TOKEN_KEY = "wsaToken";
+const LOGOUT_EVENT_KEY = "wsaLogout";
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -26,7 +29,8 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         async function restoreSession() {
-            const token = localStorage.getItem("wsaToken");
+            const token =
+                sessionStorage.getItem(TOKEN_KEY);
 
             if (!token) {
                 setLoading(false);
@@ -34,7 +38,8 @@ export function AuthProvider({ children }) {
             }
 
             try {
-                const currentUser = await getCurrentUser();
+                const currentUser =
+                    await getCurrentUser();
 
                 setUser(currentUser);
             } catch (error) {
@@ -43,7 +48,7 @@ export function AuthProvider({ children }) {
                     error
                 );
 
-                localStorage.removeItem("wsaToken");
+                sessionStorage.removeItem(TOKEN_KEY);
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -58,41 +63,66 @@ export function AuthProvider({ children }) {
     | Cross-Tab Logout Detection
     |--------------------------------------------------------------------------
     |
-    | localStorage is shared between tabs.
+    | sessionStorage keeps authentication tokens isolated per tab.
     |
-    | When another tab removes wsaToken during logout, the browser fires
-    | the "storage" event in every OTHER tab.
+    | localStorage is used ONLY to broadcast a logout event.
     |
-    | This lets us immediately remove the protected UI and send the user
-    | back to the login page.
+    | The event contains the user ID, so only tabs belonging to that
+    | same user log out.
     |
     */
 
     useEffect(() => {
         const handleStorageChange = (event) => {
-            if (event.key !== "wsaToken") {
+            if (event.key !== LOGOUT_EVENT_KEY) {
+                return;
+            }
+
+            if (!event.newValue) {
+                return;
+            }
+
+            let logoutData;
+
+            try {
+                logoutData = JSON.parse(
+                    event.newValue
+                );
+            } catch {
+                return;
+            }
+
+            if (!logoutData?.userId) {
                 return;
             }
 
             /*
-             * Token was removed from another tab.
+             * Only react if this tab is logged in as
+             * the same user who logged out elsewhere.
              */
-            if (event.newValue === null) {
+
+            if (
+                user?.id &&
+                String(user.id) ===
+                    String(logoutData.userId)
+            ) {
+                sessionStorage.removeItem(
+                    TOKEN_KEY
+                );
+
                 setUser(null);
 
-                if (window.location.pathname !== "/login") {
-                    window.location.replace("/login");
+                /*
+                 * Return to the application root.
+                 * Do not force /login.
+                 */
+
+                if (
+                    window.location.pathname !== "/"
+                ) {
+                    window.location.replace("/");
                 }
-
-                return;
             }
-
-            /*
-             * A new token was written from another tab.
-             *
-             * We intentionally do not automatically fetch the user here.
-             * Existing login/session restoration behavior remains unchanged.
-             */
         };
 
         window.addEventListener(
@@ -106,7 +136,7 @@ export function AuthProvider({ children }) {
                 handleStorageChange
             );
         };
-    }, []);
+    }, [user]);
 
     /*
     |--------------------------------------------------------------------------
@@ -118,13 +148,18 @@ export function AuthProvider({ children }) {
         setLoading(true);
 
         try {
-            const response = await loginRequest(
-                email,
-                password
-            );
+            const response =
+                await loginRequest(
+                    email,
+                    password
+                );
 
-            localStorage.setItem(
-                "wsaToken",
+            /*
+             * Token remains isolated to this browser tab.
+             */
+
+            sessionStorage.setItem(
+                TOKEN_KEY,
                 response.token
             );
 
@@ -160,11 +195,6 @@ export function AuthProvider({ children }) {
                     password
                 );
 
-            /*
-             * Registration does NOT create a session.
-             * User must verify email and login separately.
-             */
-
             return response;
         } finally {
             setLoading(false);
@@ -178,6 +208,12 @@ export function AuthProvider({ children }) {
     */
 
     const logout = async () => {
+        /*
+         * Save the user ID BEFORE clearing the local user state.
+         */
+
+        const loggedOutUserId = user?.id;
+
         try {
             await logoutRequest();
         } catch (error) {
@@ -187,19 +223,43 @@ export function AuthProvider({ children }) {
             );
         } finally {
             /*
-             * Removing the token here will automatically trigger the
-             * "storage" event in every OTHER browser tab.
+             * Remove this tab's authentication token.
              */
-            localStorage.removeItem("wsaToken");
+
+            sessionStorage.removeItem(
+                TOKEN_KEY
+            );
 
             setUser(null);
 
             /*
-             * Immediately remove the protected application from the
-             * current tab as well.
+             * Tell other tabs belonging to THIS USER
+             * that the session has been logged out.
+             *
+             * We use Date.now() so every logout generates
+             * a new storage event.
              */
-            if (window.location.pathname !== "/login") {
-                window.location.replace("/login");
+
+            if (loggedOutUserId) {
+                localStorage.setItem(
+                    LOGOUT_EVENT_KEY,
+                    JSON.stringify({
+                        userId:
+                            loggedOutUserId,
+                        timestamp:
+                            Date.now(),
+                    })
+                );
+            }
+
+            /*
+             * Don't navigate to /login directly.
+             */
+
+            if (
+                window.location.pathname !== "/"
+            ) {
+                window.location.replace("/");
             }
         }
     };
