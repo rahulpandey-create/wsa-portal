@@ -30,7 +30,7 @@ class StoreCandidateApplicationRequest extends FormRequest
             'phone' => 'required|string|regex:/^\+?[0-9]{10,15}$/',
             'experience' => 'required|integer|min:0',
             'cover_letter' => 'nullable|string',
-            'resume' => 'nullable|file|mimes:pdf,doc,docx|max:5120', // Optional resume upload
+            'resume' => 'required|file|mimes:pdf,doc,docx|max:5120', // Optional resume upload
         
         ];
     }

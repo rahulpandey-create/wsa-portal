@@ -1,6 +1,9 @@
 // src/pages/Notifications.jsx
 
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import echo from "../echo";
+
 import {
     getNotifications,
     markNotificationAsRead,
@@ -8,9 +11,15 @@ import {
 } from "../api/notifications";
 
 export default function Notifications() {
+    const { user } = useAuth();
+
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    // --------------------------------------------------
+    // Load existing notifications
+    // --------------------------------------------------
 
     useEffect(() => {
         async function loadNotifications() {
@@ -41,9 +50,96 @@ export default function Notifications() {
         loadNotifications();
     }, []);
 
-    const unreadCount = notifications.filter(
-        (notification) => !notification.read
-    ).length;
+    // --------------------------------------------------
+    // Real-time notifications
+    // --------------------------------------------------
+
+    useEffect(() => {
+        if (!user?.id) {
+            return;
+        }
+
+        const channelName =
+            `App.Models.User.${user.id}`;
+
+        console.log(
+            "🔔 Subscribing to:",
+            channelName
+        );
+
+        const channel =
+            echo.private(channelName);
+
+        channel.notification(
+            (notification) => {
+                console.log(
+                    "🔔 New notification received:",
+                    notification
+                );
+
+                const newNotification = {
+                    id:
+                        notification.id ||
+                        crypto.randomUUID(),
+
+                    type:
+                        notification.type ||
+                        null,
+
+                    title:
+                        notification.title ||
+                        "Notification",
+
+                    message:
+                        notification.message ||
+                        "",
+
+                    job_id:
+                        notification.job_id ||
+                        null,
+
+                    job_title:
+                        notification.job_title ||
+                        null,
+
+                    read: false,
+
+                    created_at:
+                        new Date().toISOString(),
+                };
+
+                setNotifications(
+                    (current) => [
+                        newNotification,
+                        ...current,
+                    ]
+                );
+            }
+        );
+
+        return () => {
+            console.log(
+                "🔕 Leaving:",
+                channelName
+            );
+
+            echo.leave(channelName);
+        };
+    }, [user?.id]);
+
+    // --------------------------------------------------
+    // Unread count
+    // --------------------------------------------------
+
+    const unreadCount =
+        notifications.filter(
+            (notification) =>
+                !notification.read
+        ).length;
+
+    // --------------------------------------------------
+    // Mark all as read
+    // --------------------------------------------------
 
     const handleMarkAllRead = async () => {
         if (unreadCount === 0) {
@@ -54,10 +150,12 @@ export default function Notifications() {
             await markAllNotificationsAsRead();
 
             setNotifications((current) =>
-                current.map((notification) => ({
-                    ...notification,
-                    read: true,
-                }))
+                current.map(
+                    (notification) => ({
+                        ...notification,
+                        read: true,
+                    })
+                )
             );
         } catch (error) {
             console.error(
@@ -66,6 +164,10 @@ export default function Notifications() {
             );
         }
     };
+
+    // --------------------------------------------------
+    // Mark notification as read
+    // --------------------------------------------------
 
     const handleNotificationClick = async (
         notification
@@ -83,9 +185,9 @@ export default function Notifications() {
                 current.map((item) =>
                     item.id === notification.id
                         ? {
-                              ...item,
-                              read: true,
-                          }
+                            ...item,
+                            read: true,
+                        }
                         : item
                 )
             );
@@ -100,8 +202,11 @@ export default function Notifications() {
     return (
         <>
             {/* Page Header */}
+
             <div className="mb-5 flex items-start justify-between gap-4">
+
                 <div>
+
                     <h2 className="m-0 text-[26px] font-bold text-[#071d41]">
                         Notifications
                     </h2>
@@ -109,11 +214,14 @@ export default function Notifications() {
                     <p className="mt-1 text-[14px] text-[#52688f]">
                         Approved job alerts for registered Associates.
                     </p>
+
                 </div>
 
                 <button
                     type="button"
-                    onClick={handleMarkAllRead}
+                    onClick={
+                        handleMarkAllRead
+                    }
                     disabled={
                         loading ||
                         unreadCount === 0
@@ -122,9 +230,11 @@ export default function Notifications() {
                 >
                     Mark all read
                 </button>
+
             </div>
 
             {/* Error */}
+
             {error && (
                 <div className="mb-4 rounded-[10px] border border-red-200 bg-red-50 px-5 py-4 text-[14px] text-red-700">
                     {error}
@@ -132,21 +242,32 @@ export default function Notifications() {
             )}
 
             {/* Loading */}
+
             {loading ? (
+
                 <div className="rounded-[10px] border border-[#d8e2ef] bg-white px-5 py-10 text-center text-[14px] text-[#52688f]">
                     Loading notifications...
                 </div>
+
             ) : (
+
                 <div className="flex flex-col gap-[10px]">
+
                     {notifications.length === 0 ? (
+
                         <div className="rounded-[10px] border border-[#d8e2ef] bg-white px-5 py-10 text-center text-[14px] text-[#52688f]">
                             No notifications found.
                         </div>
+
                     ) : (
+
                         notifications.map(
                             (notification) => (
+
                                 <button
-                                    key={notification.id}
+                                    key={
+                                        notification.id
+                                    }
                                     type="button"
                                     onClick={() =>
                                         handleNotificationClick(
@@ -156,28 +277,53 @@ export default function Notifications() {
                                     className={[
                                         "w-full text-left rounded-[10px] border bg-white px-[14px] py-[11px]",
                                         "transition-all hover:bg-[#f8faff]",
+
                                         notification.read
                                             ? "border-[#d8e2ef]"
                                             : "border-[#d8e2ef] border-l-[4px] border-l-[#2160c9]",
                                     ].join(" ")}
                                 >
+
                                     <div className="text-[16px] font-bold leading-[1.35] text-[#071d41]">
-                                        {notification.title}
+
+                                        {
+                                            notification.title
+                                        }
+
                                     </div>
 
                                     <div className="mt-[3px] text-[13px] leading-[1.4] text-[#52688f]">
-                                        {notification.message}
+
+                                        {
+                                            notification.message
+                                        }
+
                                     </div>
 
                                     <div className="mt-[3px] text-[12px] text-[#52688f]">
-                                        {notification.created_at}
+
+                                        {new Date(notification.created_at).toLocaleString("en-IN", {
+                                            day: "2-digit",
+                                            month: "short",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: true,
+                                        })}
+
                                     </div>
+
                                 </button>
+
                             )
                         )
+
                     )}
+
                 </div>
+
             )}
+
         </>
     );
 }

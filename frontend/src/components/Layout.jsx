@@ -18,19 +18,23 @@ export default function Layout() {
     return (
         <div className="min-h-screen bg-[#f3f6fb]">
 
+            {/* Sidebar */}
             <Sidebar
                 role={role}
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
             />
 
+            {/* Main Content */}
             <div className="min-h-screen lg:ml-[250px]">
 
+                {/* Topbar */}
                 <Topbar
                     role={role}
                     setSidebarOpen={setSidebarOpen}
                 />
 
+                {/* Page Content */}
                 <main className="px-4 py-4 sm:px-5 sm:py-5 lg:px-[26px] lg:py-[26px]">
                     <Outlet />
                 </main>

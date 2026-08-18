@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
-class JobApprovedNotification extends Notification
+class JobSubmittedNotification extends Notification
 {
     use Queueable;
 
@@ -27,9 +27,9 @@ class JobApprovedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'type' => 'job_approved',
-            'title' => 'New Job Approved',
-            'message' => "The job \"{$this->jobPost->title}\" has been approved and is now available.",
+            'type' => 'job_submitted',
+            'title' => 'New Job Submitted',
+            'message' => "A new job \"{$this->jobPost->title}\" has been submitted for approval.",
             'job_id' => $this->jobPost->id,
             'job_title' => $this->jobPost->title,
         ];
@@ -38,9 +38,9 @@ class JobApprovedNotification extends Notification
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
         return new BroadcastMessage([
-            'type' => 'job_approved',
-            'title' => 'New Job Approved',
-            'message' => "The job \"{$this->jobPost->title}\" has been approved and is now available.",
+            'type' => 'job_submitted',
+            'title' => 'New Job Submitted',
+            'message' => "A new job \"{$this->jobPost->title}\" has been submitted for approval.",
             'job_id' => $this->jobPost->id,
             'job_title' => $this->jobPost->title,
         ]);

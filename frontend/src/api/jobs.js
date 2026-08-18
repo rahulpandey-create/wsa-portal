@@ -4,6 +4,11 @@ export async function getJobs() {
     return apiRequest("/job-posts");
 }
 
+
+export async function getJob(id) {
+    return apiRequest(`/job-posts/${id}`);
+}
+
 export async function getPendingJobs() {
     return apiRequest("/job-posts?status=pending");
 }
@@ -46,5 +51,12 @@ export async function uploadJobs(file) {
     return apiRequest("/job-posts/upload", {
         method: "POST",
         body: formData,
+    });
+}
+
+export async function submitCandidateApplication(applicationData) {
+    return apiRequest("/candidate-applications", {
+        method: "POST",
+        body: applicationData,
     });
 }

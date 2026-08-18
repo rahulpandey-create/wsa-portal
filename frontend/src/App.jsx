@@ -7,7 +7,6 @@ import {
 import MyJobs from "./pages/MyJobs";
 
 import { useAuth } from "./context/AuthContext";
-
 import Register from "./pages/Register";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";

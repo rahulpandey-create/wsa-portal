@@ -1,13 +1,58 @@
 // src/components/Sidebar.jsx
 
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../assets/images/download.png";
+
+import { getNotifications } from "../api/notifications";
 
 export default function Sidebar({
     role,
     sidebarOpen,
     setSidebarOpen,
 }) {
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    // --------------------------------------------------
+    // Load unread notification count
+    // --------------------------------------------------
+
+    useEffect(() => {
+        let mounted = true;
+
+        async function loadNotifications() {
+            try {
+                const response = await getNotifications();
+
+                if (!mounted) {
+                    return;
+                }
+
+                setUnreadCount(
+                    Number(response?.unread_count || 0)
+                );
+            } catch (error) {
+                console.error(
+                    "Failed to load notification count:",
+                    error
+                );
+            }
+        }
+
+        if (role) {
+            loadNotifications();
+        }
+
+        return () => {
+            mounted = false;
+        };
+    }, [role]);
+
+
+    // --------------------------------------------------
+    // Navigation Items
+    // --------------------------------------------------
+
     const adminItems = [
         {
             path: "/dashboard",
@@ -46,6 +91,7 @@ export default function Sidebar({
         },
     ];
 
+
     const associateItems = [
         {
             path: "/dashboard",
@@ -79,19 +125,28 @@ export default function Sidebar({
         },
     ];
 
+
     const menu =
         role === "admin"
             ? adminItems
             : associateItems;
 
+
+    // --------------------------------------------------
+    // Sidebar
+    // --------------------------------------------------
+
     return (
         <>
             {/* Tablet + Mobile overlay */}
+
             {sidebarOpen && (
                 <button
                     type="button"
                     aria-label="Close sidebar"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={() =>
+                        setSidebarOpen(false)
+                    }
                     className="
                         fixed
                         inset-0
@@ -101,6 +156,7 @@ export default function Sidebar({
                     "
                 />
             )}
+
 
             <aside
                 className={[
@@ -120,7 +176,9 @@ export default function Sidebar({
                         : "-translate-x-full lg:translate-x-0",
                 ].join(" ")}
             >
+
                 {/* Logo */}
+
                 <div
                     className="
                         m-4 mb-[18px]
@@ -148,7 +206,9 @@ export default function Sidebar({
                     </div>
                 </div>
 
+
                 {/* Portal label */}
+
                 <div
                     className="
                         mt-7 flex items-center gap-3 px-7
@@ -169,14 +229,18 @@ export default function Sidebar({
                     </span>
                 </div>
 
+
                 {/* Navigation */}
+
                 <nav
                     className="
                         mt-5 flex-1 overflow-y-auto px-4
                     "
                 >
                     <div className="flex flex-col gap-[4px]">
+
                         {menu.map((item) => (
+
                             <NavLink
                                 key={item.path}
                                 to={item.path}
@@ -199,6 +263,7 @@ export default function Sidebar({
                                     ].join(" ")
                                 }
                             >
+
                                 <span
                                     className="
                                         flex w-[20px] shrink-0
@@ -209,22 +274,60 @@ export default function Sidebar({
                                     {item.icon}
                                 </span>
 
-                                <span>
-                                    {item.label}
+
+                                <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+
+                                    <span>
+                                        {item.label}
+                                    </span>
+
+
+                                    {/* Unread notification badge */}
+
+                                    {item.path === "/notifications" &&
+                                        unreadCount > 0 && (
+
+                                            <span
+                                                className="
+                                                    flex
+                                                    min-w-[20px]
+                                                    h-[20px]
+                                                    items-center
+                                                    justify-center
+                                                    rounded-full
+                                                    bg-[#e94a4a]
+                                                    px-[5px]
+                                                    text-[11px]
+                                                    font-extrabold
+                                                    leading-none
+                                                    text-white
+                                                "
+                                            >
+                                                {unreadCount > 99
+                                                    ? "99+"
+                                                    : unreadCount}
+                                            </span>
+
+                                        )}
+
                                 </span>
+
                             </NavLink>
+
                         ))}
+
                     </div>
                 </nav>
+
             </aside>
         </>
     );
 }
 
 
-// ---------------------------
+// --------------------------------------------------
 // Helper Functions
-// ---------------------------
+// --------------------------------------------------
 
 export const getPageTitle = (pathname) => {
     const titles = {

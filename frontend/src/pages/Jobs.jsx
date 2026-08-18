@@ -38,7 +38,7 @@ export default function Jobs() {
 
             setError(
                 error.data?.message ||
-                    "Failed to load jobs."
+                "Failed to load jobs."
             );
         } finally {
             setLoading(false);
@@ -53,15 +53,15 @@ export default function Jobs() {
 
             const company = String(
                 job.company ||
-                    job.company_name ||
-                    job.employer ||
-                    ""
+                job.company_name ||
+                job.employer ||
+                ""
             ).toLowerCase();
 
             const location = String(
                 job.location ||
-                    job.city ||
-                    ""
+                job.city ||
+                ""
             ).toLowerCase();
 
             const jobStatus = String(
@@ -79,7 +79,7 @@ export default function Jobs() {
             const matchesStatus =
                 status === "All" ||
                 jobStatus.toLowerCase() ===
-                    status.toLowerCase();
+                status.toLowerCase();
 
             return (
                 matchesSearch &&
@@ -114,9 +114,9 @@ export default function Jobs() {
                 currentJobs.map((currentJob) =>
                     currentJob.id === job.id
                         ? {
-                              ...currentJob,
-                              status: "approved",
-                          }
+                            ...currentJob,
+                            status: "approved",
+                        }
                         : currentJob
                 )
             );
@@ -132,7 +132,7 @@ export default function Jobs() {
 
             setError(
                 error.data?.message ||
-                    "Failed to approve job."
+                "Failed to approve job."
             );
         } finally {
             setActionLoading(null);
@@ -150,9 +150,9 @@ export default function Jobs() {
                 currentJobs.map((currentJob) =>
                     currentJob.id === job.id
                         ? {
-                              ...currentJob,
-                              status: "rejected",
-                          }
+                            ...currentJob,
+                            status: "rejected",
+                        }
                         : currentJob
                 )
             );
@@ -164,7 +164,7 @@ export default function Jobs() {
 
             setError(
                 error.data?.message ||
-                    "Failed to reject job."
+                "Failed to reject job."
             );
         } finally {
             setActionLoading(null);
@@ -293,7 +293,7 @@ export default function Jobs() {
                                         const normalizedStatus =
                                             String(
                                                 job.status ||
-                                                    ""
+                                                ""
                                             ).toLowerCase();
 
                                         const associate =
@@ -341,10 +341,10 @@ export default function Jobs() {
 
                                                 <td className="px-3 py-4 text-[13px] text-[#071d41]">
                                                     {typeof associate ===
-                                                    "string"
+                                                        "string"
                                                         ? associate
                                                         : associate.name ||
-                                                          "-"}
+                                                        "-"}
                                                 </td>
 
                                                 <td className="px-3 py-4 text-[13px] text-[#071d41]">
@@ -389,44 +389,44 @@ export default function Jobs() {
 
                                                         {normalizedStatus !==
                                                             "approved" && (
-                                                            <button
-                                                                type="button"
-                                                                disabled={
-                                                                    actionLoading ===
-                                                                    job.id
-                                                                }
-                                                                onClick={() =>
-                                                                    handleApprove(
-                                                                        job
-                                                                    )
-                                                                }
-                                                                className="rounded-[8px] bg-[#12a66a] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#0d8f5a] disabled:cursor-not-allowed disabled:opacity-60"
-                                                            >
-                                                                {actionLoading ===
-                                                                job.id
-                                                                    ? "..."
-                                                                    : "Approve"}
-                                                            </button>
-                                                        )}
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={
+                                                                        actionLoading ===
+                                                                        job.id
+                                                                    }
+                                                                    onClick={() =>
+                                                                        handleApprove(
+                                                                            job
+                                                                        )
+                                                                    }
+                                                                    className="rounded-[8px] bg-[#12a66a] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#0d8f5a] disabled:cursor-not-allowed disabled:opacity-60"
+                                                                >
+                                                                    {actionLoading ===
+                                                                        job.id
+                                                                        ? "..."
+                                                                        : "Approve"}
+                                                                </button>
+                                                            )}
 
                                                         {normalizedStatus ===
                                                             "pending" && (
-                                                            <button
-                                                                type="button"
-                                                                disabled={
-                                                                    actionLoading ===
-                                                                    job.id
-                                                                }
-                                                                onClick={() =>
-                                                                    handleReject(
-                                                                        job
-                                                                    )
-                                                                }
-                                                                className="rounded-[8px] border border-[#d5e0ee] bg-white px-3 py-2 text-[12px] font-bold text-[#c73737] transition hover:bg-[#fff5f5] disabled:cursor-not-allowed disabled:opacity-60"
-                                                            >
-                                                                Reject
-                                                            </button>
-                                                        )}
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={
+                                                                        actionLoading ===
+                                                                        job.id
+                                                                    }
+                                                                    onClick={() =>
+                                                                        handleReject(
+                                                                            job
+                                                                        )
+                                                                    }
+                                                                    className="rounded-[8px] border border-[#d5e0ee] bg-white px-3 py-2 text-[12px] font-bold text-[#c73737] transition hover:bg-[#fff5f5] disabled:cursor-not-allowed disabled:opacity-60"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -584,9 +584,9 @@ function JobDetailsModal({ job, onClose }) {
         typeof job.associate === "string"
             ? job.associate
             : job.associate?.name ||
-              job.associate_name ||
-              job.user?.name ||
-              "-";
+            job.associate_name ||
+            job.user?.name ||
+            "-";
 
     return (
         <ModalShell

@@ -169,6 +169,31 @@ Route::middleware(['auth:sanctum'])->group(function () {
         |--------------------------------------------------------------------------
         */
 
+        Route::put(
+            'associates/{user}',
+            function (Request $request, User $user) {
+                if ($user->role !== 'associate') {
+                    return response()->json([
+                        'message' => 'User is not an associate.'
+                    ], 422);
+                }
+
+                $validated = $request->validate([
+                    'name' => 'required|string|min:3|max:255',
+                    'company' => 'nullable|string|max:255',
+                    'country' => 'nullable|string|max:255',
+                    'status' => 'required|string|in:Active,Inactive',
+                ]);
+
+                $user->update($validated);
+
+                return response()->json([
+                    'message' => 'Associate updated successfully.',
+                    'associate' => $user->fresh(),
+                ]);
+            }
+        );
+
         Route::post(
             'job-posts/upload',
             [JobPostController::class, 'upload']
@@ -181,7 +206,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         Route::get('associates', function () {
             return response()->json(
-                User::where('role', 'associate')->get()
+                User::where('role', 'associate')
+                    ->withCount([
+                        'jobPosts',
+                        'candidateApplications',
+                    ])
+                    ->get()
             );
         });
 

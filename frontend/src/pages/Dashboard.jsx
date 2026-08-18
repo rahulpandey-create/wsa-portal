@@ -3,9 +3,14 @@
 import { useEffect, useState } from "react";
 // import { Skeleton, SkeletonStats,} from "../components/Skeleton";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 import { getDashboard } from "../api/dashboard";
+
+import {
+    getNotifications,
+} from "../api/notifications";
 
 import {
     getJobs,
@@ -17,54 +22,6 @@ import {
 import { getApplications } from "../api/applications";
 
 
-// --------------------------------------------------
-// Dummy Recent Activity
-// Replace this with API data later.
-// --------------------------------------------------
-
-const dummyActivity = [
-    {
-        id: 1,
-        icon: "✓",
-        title: "Job approved",
-        description:
-            '"Frontend React Developer" was approved and is now available to Associates.',
-        time: "10 mins ago",
-    },
-    {
-        id: 2,
-        icon: "♙",
-        title: "New profile received",
-        description:
-            'A new student profile was submitted for "UI Designer".',
-        time: "25 mins ago",
-    },
-    {
-        id: 3,
-        icon: "▤",
-        title: "New job submitted",
-        description:
-            'A new job "Junior Web Developer" was submitted for approval.',
-        time: "42 mins ago",
-    },
-    {
-        id: 4,
-        icon: "✓",
-        title: "Job approved",
-        description:
-            '"Laravel Developer - QA" was approved by Admin.',
-        time: "1 hour ago",
-    },
-    {
-        id: 5,
-        icon: "♙",
-        title: "New profile received",
-        description:
-            "A new candidate profile was received from an Associate.",
-        time: "2 hours ago",
-    },
-];
-
 
 export default function Dashboard() {
 
@@ -75,6 +32,7 @@ export default function Dashboard() {
 
     const role = user?.role;
 
+    const navigate = useNavigate();
 
     const [data, setData] = useState(null);
 
@@ -83,6 +41,9 @@ export default function Dashboard() {
 
     const [profiles, setProfiles] =
         useState([]);
+
+    const [notifications, setNotifications] = useState([]);
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
     const [actionLoading, setActionLoading] =
         useState(null);
@@ -122,15 +83,19 @@ export default function Dashboard() {
                         dashboardData,
                         pendingResponse,
                         applicationsResponse,
+                        notificationsResponse,
                     ] = await Promise.all([
                         getDashboard(),
                         getPendingJobs(),
                         getApplications(),
+                        getNotifications(),
                     ]);
-
 
                     setData(dashboardData);
 
+                    // --------------------------------------------------
+                    // Pending Jobs
+                    // --------------------------------------------------
 
                     const jobData =
                         Array.isArray(pendingResponse)
@@ -139,36 +104,45 @@ export default function Dashboard() {
                             pendingResponse?.jobs ||
                             [];
 
-
                     const pending = jobData.filter(
                         (job) =>
                             String(
                                 job.status || ""
-                            ).toLowerCase() ===
-                            "pending"
+                            ).toLowerCase() === "pending"
                     );
-
 
                     setPendingJobs(pending);
 
 
+                    // --------------------------------------------------
+                    // Profiles
+                    // --------------------------------------------------
+
                     const applicationData =
-                        Array.isArray(
-                            applicationsResponse
-                        )
+                        Array.isArray(applicationsResponse)
                             ? applicationsResponse
                             : applicationsResponse?.data ||
                             applicationsResponse?.applications ||
                             [];
 
+                    setProfiles(applicationData);
 
-                    setProfiles(
-                        applicationData
-                    );
+
+                    // --------------------------------------------------
+                    // Notifications
+                    // --------------------------------------------------
+
+                    const notificationData =
+                        Array.isArray(notificationsResponse)
+                            ? notificationsResponse
+                            : notificationsResponse?.data ||
+                            notificationsResponse?.notifications ||
+                            [];
+
+                    setNotifications(notificationData);
 
                     return;
                 }
-
 
                 // --------------------------------------------------
                 // ASSOCIATE
@@ -180,10 +154,21 @@ export default function Dashboard() {
                 const [
                     jobsResponse,
                     applicationsResponse,
+                    notificationsResponse,
                 ] = await Promise.all([
                     getJobs(),
                     getApplications(),
+                    getNotifications(),
                 ]);
+
+                const notificationData =
+                    Array.isArray(notificationsResponse)
+                        ? notificationsResponse
+                        : notificationsResponse?.data ||
+                        notificationsResponse?.notifications ||
+                        [];
+
+                setNotifications(notificationData);
 
 
                 const jobData =
@@ -220,44 +205,10 @@ export default function Dashboard() {
 
 
                 setData({
-
                     my_jobs: [],
 
-                    approved_jobs:
-                        approvedJobs,
-
-                    notifications:
-                        dummyActivity.map(
-                            (activity) => ({
-                                id: activity.id,
-                                text:
-                                    activity.title,
-                                date:
-                                    activity.time,
-                                read:
-                                    activity.id > 2,
-                            })
-                        ),
-
-                    unread_notifications:
-                        dummyActivity
-                            .filter(
-                                (activity) =>
-                                    activity.id <= 2
-                            )
-                            .map(
-                                (activity) => ({
-                                    id:
-                                        activity.id,
-                                    text:
-                                        activity.title,
-                                    date:
-                                        activity.time,
-                                    read: false,
-                                })
-                            ),
+                    approved_jobs: approvedJobs,
                 });
-
 
             } catch (error) {
 
@@ -582,58 +533,72 @@ export default function Dashboard() {
 
                     {/* Recent Activity */}
 
-                    <section className="overflow-hidden rounded-[15px] border border-[#d9e2ef] bg-white shadow-[0_8px_24px_rgba(30,60,100,0.07)]">
+                    <div className="px-[18px]">
 
-                        <PanelHeader
-                            title="Recent Activity"
-                        />
+                        {notifications.length === 0 ? (
 
+                            <div className="py-8 text-center text-sm text-[#52688f]">
+                                No recent activity.
+                            </div>
 
-                        <div className="px-[18px]">
+                        ) : (
 
-                            {dummyActivity.map(
-                                (activity) => (
+                            notifications
+                                .filter((notification) => {
+                                    if (notification.type !== "job_submitted") {
+                                        return true;
+                                    }
+
+                                    const relatedJob = pendingJobs.find(
+                                        (job) =>
+                                            String(job.id) ===
+                                            String(notification.job_id)
+                                    );
+
+                                    return !!relatedJob;
+                                })
+                                .slice(0, 5)
+                                .map((notification) => (
 
                                     <div
-                                        key={
-                                            activity.id
-                                        }
+                                        key={notification.id}
                                         className="flex gap-3 border-b border-[#e7edf5] py-[17px] last:border-b-0"
                                     >
 
+                                        {/* Icon */}
+
                                         <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
-
-                                            {
-                                                activity.icon
-                                            }
-
+                                            🔔
                                         </div>
 
+
+                                        {/* Notification Content */}
 
                                         <div className="min-w-0">
 
                                             <p className="text-[13px] leading-[18px] text-[#071d49]">
 
                                                 <strong>
-                                                    {
-                                                        activity.title
-                                                    }
+                                                    {notification.title}
                                                 </strong>
 
                                                 <br />
 
-                                                {
-                                                    activity.description
-                                                }
+                                                {notification.message}
 
                                             </p>
 
 
                                             <small className="text-[12px] text-[#52688f]">
 
-                                                {
-                                                    activity.time
-                                                }
+                                                {new Date(notification.created_at).toLocaleString("en-IN", {
+                                                    day: "2-digit",
+                                                    month: "short",
+                                                    year: "numeric",
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                    hour12: true,
+                                                })}
 
                                             </small>
 
@@ -641,12 +606,11 @@ export default function Dashboard() {
 
                                     </div>
 
-                                )
-                            )}
+                                ))
 
-                        </div>
+                        )}
 
-                    </section>
+                    </div>
 
                 </div>
 
@@ -712,17 +676,10 @@ export default function Dashboard() {
 
 
     const unreadNotifications =
-        Array.isArray(
-            data?.unread_notifications
-        )
-            ? data.unread_notifications
-            : (
-                data?.notifications || []
-            ).filter(
-                (notification) =>
-                    !notification.read
-            );
-
+        notifications.filter(
+            (notification) =>
+                !notification.read
+        );
 
     return (
 
@@ -843,41 +800,51 @@ export default function Dashboard() {
 
                     <div className="p-[18px]">
 
-                        {(data?.notifications || [])
-                            .slice(0, 5)
-                            .map(
-                                (
-                                    notification
-                                ) => (
-
+                        {notifications.length === 0 ? (
+                            <div className="py-8 text-center text-sm text-[#52688f]">
+                                No notifications found.
+                            </div>
+                        ) : (
+                            notifications
+                                .slice(0, 5)
+                                .map((notification) => (
                                     <div
-                                        key={
-                                            notification.id
-                                        }
+                                        key={notification.id}
                                         className="mb-[10px] rounded-[11px] border border-[#d9e2ef] bg-white px-[14px] py-[12px] last:mb-0"
                                     >
+                                        <div className="flex items-start gap-3">
 
-                                        <strong className="block text-[14px] leading-[18px] text-[#071d49]">
+                                            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
+                                                🔔
+                                            </div>
 
-                                            {
-                                                notification.text
-                                            }
+                                            <div className="min-w-0">
 
-                                        </strong>
+                                                <strong className="block text-[14px] leading-[18px] text-[#071d49]">
+                                                    {notification.title}
+                                                </strong>
 
+                                                <div className="mt-[4px] text-[12px] leading-[17px] text-[#52688f]">
+                                                    {notification.message}
+                                                </div>
 
-                                        <div className="mt-[4px] text-[12px] text-[#52688f]">
+                                                <div className="mt-[8px] text-[11px] text-[#52688f]">
+                                                    {new Date(notification.created_at).toLocaleString("en-IN", {
+                                                        day: "2-digit",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                        hour12: true,
+                                                    })}
+                                                </div>
 
-                                            {
-                                                notification.date
-                                            }
+                                            </div>
 
                                         </div>
-
                                     </div>
-
-                                )
-                            )}
+                                ))
+                        )}
 
                     </div>
 
@@ -972,6 +939,7 @@ export default function Dashboard() {
 
                                 <button
                                     type="button"
+                                    onClick={() => navigate("/sponsored-jobs")}
                                     className="self-start rounded-[8px] bg-[#26b9dc] px-[12px] py-[10px] text-[12px] font-bold text-[#06204f] transition hover:bg-[#18acd1] sm:self-auto"
                                 >
 
@@ -1418,14 +1386,13 @@ function DashboardJobRow({
                     text-[12px]
                     font-bold
 
-                    ${
-                        normalizedStatus ===
+                    ${normalizedStatus ===
                         "approved"
-                            ? "bg-[#dcf5ea] text-[#07834f]"
-                            : normalizedStatus ===
-                                "rejected"
-                                ? "bg-[#fde5e5] text-[#c73737]"
-                                : "bg-[#fff1d1] text-[#a96b00]"
+                        ? "bg-[#dcf5ea] text-[#07834f]"
+                        : normalizedStatus ===
+                            "rejected"
+                            ? "bg-[#fde5e5] text-[#c73737]"
+                            : "bg-[#fff1d1] text-[#a96b00]"
                     }
                 `}
             >
@@ -1670,5 +1637,4 @@ function getInitials(name = "") {
         )
         .join("")
         .toUpperCase();
-
 }

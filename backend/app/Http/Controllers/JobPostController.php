@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Notifications\JobApprovedNotification;
+use App\Notifications\JobSubmittedNotification;
 use Illuminate\Support\Facades\DB;
 use App\Models\JobPost;
 use App\Http\Requests\StoreJobPostRequest;
@@ -122,12 +123,22 @@ class JobPostController extends Controller
             'user_id' => $request->user()->id,
             'status' => 'pending',
         ]);
+
+        // Notify all admins about the new job submission
+        $admins = User::where('role', 'admin')->get();
+
+        foreach ($admins as $admin) {
+            $admin->notify(
+                new JobSubmittedNotification($jobPost)
+            );
+        }
+
         return response()->json([
             'message' => 'Job created successfully',
-            'data' => new JobPostResource($jobPost), // Load the user relationship
+            'data' => new JobPostResource($jobPost),
         ], 201);
     }
-    
+
 
     public function upload(Request $request)
     {
@@ -197,6 +208,14 @@ class JobPostController extends Controller
                 'description' => $data['description'],
                 'status' => 'pending',
             ]);
+
+            $admins = User::where('role', 'admin')->get();
+
+            foreach ($admins as $admin) {
+                $admin->notify(
+                    new JobSubmittedNotification($jobPost)
+                );
+            }
 
             $created[] = $jobPost;
         }
