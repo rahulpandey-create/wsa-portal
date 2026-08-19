@@ -23,5 +23,8 @@ php artisan db:seed --force
 # Start PHP-FPM in the background
 php-fpm -D
 
+# Start Laravel Reverb in the background
+php artisan reverb:start --host=0.0.0.0 --port=8080 &
+
 # Start Nginx in the foreground
 nginx -g "daemon off;"
