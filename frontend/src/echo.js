@@ -3,33 +3,43 @@ import Pusher from "pusher-js";
 
 window.Pusher = Pusher;
 
-const token = sessionStorage.getItem("wsaToken");
+const token =
+    sessionStorage.getItem("wsaToken");
 
 const echo = new Echo({
     broadcaster: "reverb",
 
-    key: import.meta.env.VITE_REVERB_APP_KEY,
+    key:
+        import.meta.env.VITE_REVERB_APP_KEY ||
+        "local-key",
 
     wsHost:
         import.meta.env.VITE_REVERB_HOST ||
         "127.0.0.1",
 
     wsPort:
-        Number(import.meta.env.VITE_REVERB_PORT) ||
-        8080,
+        Number(
+            import.meta.env.VITE_REVERB_PORT
+        ) || 8080,
 
     wssPort:
-        Number(import.meta.env.VITE_REVERB_PORT) ||
-        8080,
+        Number(
+            import.meta.env.VITE_REVERB_PORT
+        ) || 8080,
 
-    forceTLS: false,
+    forceTLS:
+        (
+            import.meta.env.VITE_REVERB_SCHEME ||
+            "http"
+        ) === "https",
 
-    // IMPORTANT:
-    // Local Reverb is running without TLS.
-    enabledTransports: ["ws"],
+    enabledTransports: [
+        "ws",
+        "wss",
+    ],
 
     authEndpoint:
-        "http://127.0.0.1:8000/api/broadcasting/auth",
+        `${import.meta.env.VITE_API_URL}/broadcasting/auth`,
 
     auth: {
         headers: {
@@ -45,7 +55,7 @@ const echo = new Echo({
     },
 });
 
-console.log("🔥 echo.js loaded");
+console.log("🔥 Echo initialized");
 
 echo.connector.pusher.connection.bind(
     "connected",

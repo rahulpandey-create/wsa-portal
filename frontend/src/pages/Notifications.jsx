@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import echo from "../echo";
+
 
 import {
     getNotifications,
@@ -49,83 +49,45 @@ export default function Notifications() {
 
         loadNotifications();
     }, []);
-
+    
     // --------------------------------------------------
     // Real-time notifications
     // --------------------------------------------------
 
     useEffect(() => {
-        if (!user?.id) {
-            return;
-        }
+        const handleNewNotification = (event) => {
+            const notification =
+                event.detail;
 
-        const channelName =
-            `App.Models.User.${user.id}`;
-
-        console.log(
-            "🔔 Subscribing to:",
-            channelName
-        );
-
-        const channel =
-            echo.private(channelName);
-
-        channel.notification(
-            (notification) => {
-                console.log(
-                    "🔔 New notification received:",
-                    notification
-                );
-
-                const newNotification = {
-                    id:
-                        notification.id ||
-                        crypto.randomUUID(),
-
-                    type:
-                        notification.type ||
-                        null,
-
-                    title:
-                        notification.title ||
-                        "Notification",
-
-                    message:
-                        notification.message ||
-                        "",
-
-                    job_id:
-                        notification.job_id ||
-                        null,
-
-                    job_title:
-                        notification.job_title ||
-                        null,
-
-                    read: false,
-
-                    created_at:
-                        new Date().toISOString(),
-                };
-
-                setNotifications(
-                    (current) => [
-                        newNotification,
-                        ...current,
-                    ]
-                );
+            if (!notification) {
+                return;
             }
+
+            console.log(
+                "🔔 Notification page received:",
+                notification
+            );
+
+            setNotifications(
+                (current) => [
+                    notification,
+                    ...current,
+                ]
+            );
+        };
+
+        window.addEventListener(
+            "new-notification",
+            handleNewNotification
         );
 
         return () => {
-            console.log(
-                "🔕 Leaving:",
-                channelName
+            window.removeEventListener(
+                "new-notification",
+                handleNewNotification
             );
-
-            echo.leave(channelName);
         };
-    }, [user?.id]);
+    }, []);
 
     // --------------------------------------------------
     // Unread count

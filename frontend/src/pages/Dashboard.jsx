@@ -1,6 +1,6 @@
 // src/pages/Dashboard.jsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 // import { Skeleton, SkeletonStats,} from "../components/Skeleton";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
@@ -44,6 +44,13 @@ export default function Dashboard() {
 
     const [notifications, setNotifications] = useState([]);
     const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+    const [notificationToast, setNotificationToast] = useState(null);
+
+    const [highlightedNotificationId, setHighlightedNotificationId] =
+        useState(null);
+
+    const toastTimeoutRef = useRef(null);
+    const highlightTimeoutRef = useRef(null);
 
     const [actionLoading, setActionLoading] =
         useState(null);
@@ -236,6 +243,291 @@ export default function Dashboard() {
 
     }, [role, authLoading]);
 
+    // --------------------------------------------------
+    // Real-time notification listener
+    // --------------------------------------------------
+
+    useEffect(() => {
+
+        if (!user?.id) {
+            return;
+        }
+
+
+        const playNotificationSound = () => {
+
+            try {
+
+                const AudioContext =
+                    window.AudioContext ||
+                    window.webkitAudioContext;
+
+                if (!AudioContext) {
+                    return;
+                }
+
+
+                const audioContext =
+                    new AudioContext();
+
+
+                const oscillator =
+                    audioContext.createOscillator();
+
+
+                const gainNode =
+                    audioContext.createGain();
+
+
+                oscillator.type = "sine";
+
+
+                oscillator.frequency.setValueAtTime(
+                    880,
+                    audioContext.currentTime
+                );
+
+
+                oscillator.frequency.setValueAtTime(
+                    1175,
+                    audioContext.currentTime + 0.08
+                );
+
+
+                gainNode.gain.setValueAtTime(
+                    0.0001,
+                    audioContext.currentTime
+                );
+
+
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.12,
+                    audioContext.currentTime + 0.01
+                );
+
+
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.0001,
+                    audioContext.currentTime + 0.18
+                );
+
+
+                oscillator.connect(gainNode);
+
+                gainNode.connect(
+                    audioContext.destination
+                );
+
+
+                oscillator.start();
+
+
+                oscillator.stop(
+                    audioContext.currentTime + 0.2
+                );
+
+
+                oscillator.onended = () => {
+                    audioContext.close();
+                };
+
+            } catch (error) {
+
+                console.warn(
+                    "Notification sound could not be played:",
+                    error
+                );
+
+            }
+
+        };
+
+
+        const handleNewNotification = (event) => {
+
+            const notification =
+                event.detail;
+
+
+            if (!notification) {
+                return;
+            }
+
+
+            console.log(
+                "🔔 Dashboard received notification:",
+                notification
+            );
+
+
+            // --------------------------------------------------
+            // Prevent duplicate notification
+            // --------------------------------------------------
+
+            setNotifications((current) => {
+
+                const alreadyExists =
+                    notification.id &&
+                    current.some(
+                        (item) =>
+                            String(item.id) ===
+                            String(notification.id)
+                    );
+
+
+                if (alreadyExists) {
+                    return current;
+                }
+
+
+                return [
+                    notification,
+                    ...current,
+                ];
+
+            });
+
+
+            // --------------------------------------------------
+            // Increase unread count
+            // --------------------------------------------------
+
+            setUnreadNotificationCount(
+                (current) => current + 1
+            );
+
+
+            // --------------------------------------------------
+            // Highlight notification
+            // --------------------------------------------------
+
+            setHighlightedNotificationId(
+                notification.id
+            );
+
+
+            // --------------------------------------------------
+            // Show toast
+            // --------------------------------------------------
+
+            setNotificationToast(
+                notification
+            );
+
+
+            // --------------------------------------------------
+            // Play notification sound
+            // --------------------------------------------------
+
+            playNotificationSound();
+
+
+            // --------------------------------------------------
+            // Clear existing toast timer
+            // --------------------------------------------------
+
+            if (toastTimeoutRef.current) {
+
+                clearTimeout(
+                    toastTimeoutRef.current
+                );
+
+            }
+
+
+            // --------------------------------------------------
+            // Remove toast after 5 seconds
+            // --------------------------------------------------
+
+            toastTimeoutRef.current =
+                setTimeout(() => {
+
+                    setNotificationToast(
+                        (current) => {
+
+                            if (
+                                current?.id ===
+                                notification.id
+                            ) {
+                                return null;
+                            }
+
+                            return current;
+
+                        }
+
+                    );
+
+                }, 5000);
+
+
+            // --------------------------------------------------
+            // Clear existing highlight timer
+            // --------------------------------------------------
+
+            if (highlightTimeoutRef.current) {
+
+                clearTimeout(
+                    highlightTimeoutRef.current
+                );
+
+            }
+
+
+            // --------------------------------------------------
+            // Remove highlight after 6 seconds
+            // --------------------------------------------------
+
+            highlightTimeoutRef.current =
+                setTimeout(() => {
+
+                    setHighlightedNotificationId(
+                        (current) =>
+                            current ===
+                            notification.id
+                                ? null
+                                : current
+                    );
+
+                }, 6000);
+
+        };
+
+
+        window.addEventListener(
+            "new-notification",
+            handleNewNotification
+        );
+
+
+        return () => {
+
+            window.removeEventListener(
+                "new-notification",
+                handleNewNotification
+            );
+
+
+            if (toastTimeoutRef.current) {
+
+                clearTimeout(
+                    toastTimeoutRef.current
+                );
+
+            }
+
+
+            if (highlightTimeoutRef.current) {
+
+                clearTimeout(
+                    highlightTimeoutRef.current
+                );
+
+            }
+
+        };
+
+    }, [user?.id]);
 
     // --------------------------------------------------
     // Approve Job
@@ -977,6 +1269,8 @@ export default function Dashboard() {
     );
 
 }
+
+
 
 
 /* ==========================================================================

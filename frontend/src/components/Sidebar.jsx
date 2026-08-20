@@ -1,53 +1,16 @@
 // src/components/Sidebar.jsx
 
-import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../assets/images/download.png";
 
-import { getNotifications } from "../api/notifications";
+import { useNotifications } from "../context/NotificationContext";
 
 export default function Sidebar({
     role,
     sidebarOpen,
     setSidebarOpen,
 }) {
-    const [unreadCount, setUnreadCount] = useState(0);
-
-    // --------------------------------------------------
-    // Load unread notification count
-    // --------------------------------------------------
-
-    useEffect(() => {
-        let mounted = true;
-
-        async function loadNotifications() {
-            try {
-                const response = await getNotifications();
-
-                if (!mounted) {
-                    return;
-                }
-
-                setUnreadCount(
-                    Number(response?.unread_count || 0)
-                );
-            } catch (error) {
-                console.error(
-                    "Failed to load notification count:",
-                    error
-                );
-            }
-        }
-
-        if (role) {
-            loadNotifications();
-        }
-
-        return () => {
-            mounted = false;
-        };
-    }, [role]);
-
+    const { unreadCount } = useNotifications();
 
     // --------------------------------------------------
     // Navigation Items
@@ -91,7 +54,6 @@ export default function Sidebar({
         },
     ];
 
-
     const associateItems = [
         {
             path: "/dashboard",
@@ -125,12 +87,10 @@ export default function Sidebar({
         },
     ];
 
-
     const menu =
         role === "admin"
             ? adminItems
             : associateItems;
-
 
     // --------------------------------------------------
     // Sidebar
@@ -157,7 +117,6 @@ export default function Sidebar({
                 />
             )}
 
-
             <aside
                 className={[
                     "fixed inset-y-0 left-0 z-50 flex flex-col",
@@ -176,7 +135,6 @@ export default function Sidebar({
                         : "-translate-x-full lg:translate-x-0",
                 ].join(" ")}
             >
-
                 {/* Logo */}
 
                 <div
@@ -206,7 +164,6 @@ export default function Sidebar({
                     </div>
                 </div>
 
-
                 {/* Portal label */}
 
                 <div
@@ -229,7 +186,6 @@ export default function Sidebar({
                     </span>
                 </div>
 
-
                 {/* Navigation */}
 
                 <nav
@@ -238,9 +194,7 @@ export default function Sidebar({
                     "
                 >
                     <div className="flex flex-col gap-[4px]">
-
                         {menu.map((item) => (
-
                             <NavLink
                                 key={item.path}
                                 to={item.path}
@@ -263,7 +217,6 @@ export default function Sidebar({
                                     ].join(" ")
                                 }
                             >
-
                                 <span
                                     className="
                                         flex w-[20px] shrink-0
@@ -274,19 +227,15 @@ export default function Sidebar({
                                     {item.icon}
                                 </span>
 
-
                                 <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-
                                     <span>
                                         {item.label}
                                     </span>
-
 
                                     {/* Unread notification badge */}
 
                                     {item.path === "/notifications" &&
                                         unreadCount > 0 && (
-
                                             <span
                                                 className="
                                                     flex
@@ -307,23 +256,16 @@ export default function Sidebar({
                                                     ? "99+"
                                                     : unreadCount}
                                             </span>
-
                                         )}
-
                                 </span>
-
                             </NavLink>
-
                         ))}
-
                     </div>
                 </nav>
-
             </aside>
         </>
     );
 }
-
 
 // --------------------------------------------------
 // Helper Functions

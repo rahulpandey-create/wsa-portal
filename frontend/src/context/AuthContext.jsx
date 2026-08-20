@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
             if (
                 user?.id &&
                 String(user.id) ===
-                    String(logoutData.userId)
+                String(logoutData.userId)
             ) {
                 sessionStorage.removeItem(
                     TOKEN_KEY
