@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::routes([
     'prefix' => 'api',
-    'middleware' => ['auth:sanctum'],
+    'middleware' => ['api', 'auth:sanctum'],
 ]);
 
 Broadcast::channel(
