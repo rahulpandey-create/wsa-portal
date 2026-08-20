@@ -330,29 +330,59 @@ class CandidateApplicationController extends Controller
         $newStatus = $validated['status'];
 
         $workflow = [
-            'pending' => ['shortlisted', 'rejected'],
-            'shortlisted' => ['interview_scheduled', 'rejected'],
-            'interview_scheduled' => ['interviewed', 'rejected'],
-            'interviewed' => ['offered', 'rejected'],
-            'offered' => ['hired', 'rejected'],
+            'pending' => [
+                'shortlisted',
+                'interview_scheduled',
+                'rejected',
+            ],
+
+            'shortlisted' => [
+                'interview_scheduled',
+                'rejected',
+            ],
+
+            'interview_scheduled' => [
+                'interviewed',
+                'rejected',
+            ],
+
+            'interviewed' => [
+                'offered',
+                'rejected',
+            ],
+
+            'offered' => [
+                'hired',
+                'rejected',
+            ],
+
             'hired' => [],
+
             'rejected' => [],
         ];
 
-        if (!in_array($newStatus, $workflow[$currentStatus])) {
+        if (
+            !isset($workflow[$currentStatus]) ||
+            !in_array($newStatus, $workflow[$currentStatus])
+        ) {
             return response()->json([
-                'message' => "Cannot change status from {$currentStatus} to {$newStatus}"
+                'message' =>
+                    "Cannot change status from {$currentStatus} to {$newStatus}"
             ], 400);
         }
 
+        // ACTUALLY SAVE THE NEW STATUS
+        $candidateApplication->status = $newStatus;
+        $candidateApplication->save();
+
         return response()->json([
             'message' => 'Application status updated successfully',
+
             'data' => new CandidateApplicationResource(
                 $candidateApplication->load(['user', 'jobPost'])
             )
         ]);
     }
-
     public function downloadResume(CandidateApplication $candidateApplication)
     {
         if (!$candidateApplication->resume) {

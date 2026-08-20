@@ -1,13 +1,16 @@
 // src/pages/Profiles.jsx
 
 import { useEffect, useMemo, useState } from "react";
-import { getProfiles } from "../api/profiles";
+import { getProfiles, updateProfileStatus } from "../api/profiles";
 
 export default function Profiles() {
     const [search, setSearch] = useState("");
     const [profilesData, setProfilesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    // Selected profile for View modal
+    const [selectedProfile, setSelectedProfile] = useState(null);
 
     useEffect(() => {
         async function loadProfiles() {
@@ -86,7 +89,21 @@ export default function Profiles() {
             return "Pending";
         }
 
-        return status.charAt(0).toUpperCase() + status.slice(1);
+        const labels = {
+            pending: "Pending",
+            shortlisted: "Shortlisted",
+            interview_scheduled: "Interview Scheduled",
+            interviewed: "Interviewed",
+            offered: "Offered",
+            hired: "Hired",
+            rejected: "Unsuccessful",
+        };
+
+        return (
+            labels[status] ||
+            status.charAt(0).toUpperCase() +
+            status.slice(1).replaceAll("_", " ")
+        );
     };
 
     const getStatusClasses = (status) => {
@@ -108,7 +125,50 @@ export default function Profiles() {
 
         return "bg-[#e7efff] text-[#1857c9]";
     };
+    const handleStatusChange = async (status) => {
+        if (!selectedProfile) {
+            return;
+        }
 
+        try {
+            await updateProfileStatus(
+                selectedProfile.id,
+                status
+            );
+
+            // Update table data immediately
+            setProfilesData((currentProfiles) =>
+                currentProfiles.map((profile) =>
+                    profile.id === selectedProfile.id
+                        ? {
+                            ...profile,
+                            status,
+                        }
+                        : profile
+                )
+            );
+
+            // Update modal immediately
+            setSelectedProfile((current) =>
+                current
+                    ? {
+                        ...current,
+                        status,
+                    }
+                    : current
+            );
+        } catch (error) {
+            console.error(
+                "Failed to update profile status:",
+                error
+            );
+
+            alert(
+                error?.data?.message ||
+                "Failed to update profile status."
+            );
+        }
+    };
     if (loading) {
         return (
             <div className="flex min-h-[200px] items-center justify-center text-[#52688f]">
@@ -278,6 +338,11 @@ export default function Profiles() {
                                         <td className="px-3 py-[14px] align-middle">
                                             <button
                                                 type="button"
+                                                onClick={() =>
+                                                    setSelectedProfile(
+                                                        profile
+                                                    )
+                                                }
                                                 className="rounded-[8px] border border-[#d5dfec] bg-white px-[13px] py-[8px] text-[13px] font-bold text-[#071d41] transition hover:bg-[#f5f8fc]"
                                             >
                                                 View
@@ -367,6 +432,308 @@ export default function Profiles() {
                     </div>
                 </div>
             </div>
+
+            {/* ---------------------------------------------------------
+                Profile Details Modal
+            --------------------------------------------------------- */}
+
+            {selectedProfile && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-[#071d41]/55 px-4 py-6"
+                    onClick={() =>
+                        setSelectedProfile(null)
+                    }
+                >
+                    <div
+                        className="w-full max-w-[760px] max-h-[90vh] overflow-y-auto rounded-[18px] bg-white shadow-[0_25px_70px_rgba(7,29,65,0.25)]"
+                        onClick={(e) =>
+                            e.stopPropagation()
+                        }
+                    >
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between border-b border-[#d8e2ef] px-5 py-4">
+                            <h2 className="m-0 text-[24px] font-bold text-[#18243b]">
+                                Profile Details
+                            </h2>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setSelectedProfile(null)
+                                }
+                                className="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#eef3f8] text-[18px] text-[#18243b] transition hover:bg-[#e3eaf2]"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-5">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                                {/* Candidate */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        Candidate
+                                    </p>
+
+                                    <strong className="mt-1 block text-[15px] text-[#18243b]">
+                                        {selectedProfile.candidate_name ||
+                                            "-"}
+                                    </strong>
+                                </div>
+
+                                {/* Job */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        Job
+                                    </p>
+
+                                    <strong className="mt-1 block text-[15px] text-[#18243b]">
+                                        {selectedProfile.job?.title ||
+                                            "-"}
+                                    </strong>
+                                </div>
+
+                                {/* Associate */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        Associate
+                                    </p>
+
+                                    <strong className="mt-1 block text-[15px] text-[#18243b]">
+                                        {selectedProfile.user?.name ||
+                                            "-"}
+                                    </strong>
+                                </div>
+
+                                {/* Email */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        Email
+                                    </p>
+
+                                    <strong className="mt-1 block break-all text-[15px] text-[#18243b]">
+                                        {selectedProfile.email ||
+                                            "-"}
+                                    </strong>
+                                </div>
+
+                                {/* Phone */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        Phone
+                                    </p>
+
+                                    <strong className="mt-1 block text-[15px] text-[#18243b]">
+                                        {selectedProfile.phone ||
+                                            "-"}
+                                    </strong>
+                                </div>
+
+                                {/* Resume */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        File
+                                    </p>
+
+                                    <strong className="mt-1 block break-all text-[15px] text-[#18243b]">
+                                        {selectedProfile.resume ||
+                                            "-"}
+                                    </strong>
+                                </div>
+
+                                {/* Submitted */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        Submitted
+                                    </p>
+
+                                    <strong className="mt-1 block text-[15px] text-[#18243b]">
+                                        {formatDate(
+                                            selectedProfile.created_at
+                                        )}
+                                    </strong>
+                                </div>
+
+                                {/* Status */}
+                                <div className="rounded-[9px] border border-[#d8e2ef] p-3">
+                                    <p className="m-0 text-[12px] text-[#52688f]">
+                                        Status
+                                    </p>
+
+                                    <span
+                                        className={`mt-1 inline-flex rounded-full px-[11px] py-[5px] text-[12px] font-bold ${getStatusClasses(
+                                            selectedProfile.status
+                                        )}`}
+                                    >
+                                        {formatStatus(
+                                            selectedProfile.status
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Candidate Summary */}
+                            <div className="mt-4">
+                                <h3 className="m-0 text-[19px] font-bold text-[#18243b]">
+                                    Candidate Summary
+                                </h3>
+
+                                <p className="mt-2 text-[14px] leading-[1.6] text-[#18243b]">
+                                    {selectedProfile.summary ||
+                                        selectedProfile.candidate_summary ||
+                                        "No candidate summary available."}
+                                </p>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="mt-4 flex flex-wrap gap-2">
+
+                                {/* Pending */}
+                                {selectedProfile.status === "pending" && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("shortlisted")
+                                            }
+                                            className="rounded-[8px] bg-[#19ad69] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#13965b]"
+                                        >
+                                            Mark Suitable
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("rejected")
+                                            }
+                                            className="rounded-[8px] bg-[#e94b4b] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#d83d3d]"
+                                        >
+                                            Unsuccessful
+                                        </button>
+                                    </>
+                                )}
+
+                                {/* Shortlisted */}
+                                {selectedProfile.status === "shortlisted" && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("interview_scheduled")
+                                            }
+                                            className="rounded-[8px] bg-[#f5a623] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#dd941c]"
+                                        >
+                                            Schedule Interview
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("rejected")
+                                            }
+                                            className="rounded-[8px] bg-[#e94b4b] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#d83d3d]"
+                                        >
+                                            Unsuccessful
+                                        </button>
+                                    </>
+                                )}
+
+                                {/* Interview Scheduled */}
+                                {selectedProfile.status === "interview_scheduled" && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("interviewed")
+                                            }
+                                            className="rounded-[8px] bg-[#2167d5] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#1857b8]"
+                                        >
+                                            Mark Interviewed
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("rejected")
+                                            }
+                                            className="rounded-[8px] bg-[#e94b4b] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#d83d3d]"
+                                        >
+                                            Unsuccessful
+                                        </button>
+                                    </>
+                                )}
+
+                                {/* Interviewed */}
+                                {selectedProfile.status === "interviewed" && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("offered")
+                                            }
+                                            className="rounded-[8px] bg-[#19ad69] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#13965b]"
+                                        >
+                                            Make Offer
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("rejected")
+                                            }
+                                            className="rounded-[8px] bg-[#e94b4b] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#d83d3d]"
+                                        >
+                                            Unsuccessful
+                                        </button>
+                                    </>
+                                )}
+
+                                {/* Offered */}
+                                {selectedProfile.status === "offered" && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("hired")
+                                            }
+                                            className="rounded-[8px] bg-[#19ad69] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#13965b]"
+                                        >
+                                            Mark Hired
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleStatusChange("rejected")
+                                            }
+                                            className="rounded-[8px] bg-[#e94b4b] px-[12px] py-[9px] text-[14px] font-bold text-white transition hover:bg-[#d83d3d]"
+                                        >
+                                            Unsuccessful
+                                        </button>
+                                    </>
+                                )}
+
+                                {/* Hired */}
+                                {selectedProfile.status === "hired" && (
+                                    <span className="rounded-[8px] bg-[#dcf5ea] px-[12px] py-[9px] text-[14px] font-bold text-[#07834f]">
+                                        Candidate Hired
+                                    </span>
+                                )}
+
+                                {/* Rejected */}
+                                {selectedProfile.status === "rejected" && (
+                                    <span className="rounded-[8px] bg-[#fde5e5] px-[12px] py-[9px] text-[14px] font-bold text-[#c73737]">
+                                        Application Unsuccessful
+                                    </span>
+                                )}
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
