@@ -23,6 +23,9 @@ php artisan db:seed --force
 # Start PHP-FPM in the background
 php-fpm -D
 
+# Start Laravel Queue Worker in the background
+php artisan queue:work --sleep=3 --tries=3 --timeout=90 &
+
 # Start Laravel Reverb in the background
 php artisan reverb:start --host=0.0.0.0 --port=8080 &
 
