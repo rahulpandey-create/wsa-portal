@@ -8,6 +8,7 @@ export default function UploadJob() {
         title: "",
         company: "",
         location: "Perth, WA",
+        visa: "",
         job_type: "Full-time",
         salary: "",
         positions: "1",
@@ -76,7 +77,7 @@ export default function UploadJob() {
 
             alert(
                 error.data?.message ||
-                    "Failed to submit job."
+                "Failed to submit job."
             );
         } finally {
             setSubmitting(false);
@@ -264,6 +265,23 @@ export default function UploadJob() {
                                     value={form.location}
                                     onChange={handleChange}
                                     required
+                                    style={inputStyle}
+                                />
+                            </div>
+
+                            {/* Visa */}
+
+                            <div>
+                                <label style={labelStyle}>
+                                    Visa
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="visa"
+                                    value={form.visa}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 482 Sponsorship"
                                     style={inputStyle}
                                 />
                             </div>
@@ -494,7 +512,7 @@ export default function UploadJob() {
                                     onChange={(e) =>
                                         setJobDocument(
                                             e.target.files[0] ||
-                                                null
+                                            null
                                         )
                                     }
                                     required

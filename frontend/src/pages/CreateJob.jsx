@@ -52,6 +52,7 @@ export default function CreateJob({ sponsored = false }) {
                 title: form.title,
                 company: form.company,
                 location: form.location,
+                visa: form.visa,
                 job_type: form.job_type,
                 salary: form.salary,
                 description: form.description,
