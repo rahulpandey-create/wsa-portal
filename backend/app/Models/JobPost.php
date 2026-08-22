@@ -13,6 +13,7 @@ class JobPost extends Model
         'title',
         'company',
         'location',
+        'visa',
         'salary',
         'job_type',
         'description',

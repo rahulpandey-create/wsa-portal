@@ -84,6 +84,7 @@ class JobPostController extends Controller
             'title' => 'required|string|max:255',
             'company' => 'required|string|max:255',
             'location' => 'required|string|max:255',
+            'visa' => 'nullable|string|max:255',
             'salary' => 'nullable|numeric',
             'job_type' => 'required|string|max:100',
             'description' => 'required|string',
