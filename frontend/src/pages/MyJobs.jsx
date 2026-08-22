@@ -187,7 +187,7 @@ export default function MyJobs() {
                         </p>
                     </div>
 
-                    <button
+                    {/* <button
                         type="button"
                         onClick={() =>
                             navigate("/create-job")
@@ -204,7 +204,7 @@ export default function MyJobs() {
                         }}
                     >
                         + Create Job
-                    </button>
+                    </button> */}
                 </div>
 
                 {/* TABLE CARD */}

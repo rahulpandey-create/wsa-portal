@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationContext";
 
 
 import {
@@ -12,7 +13,10 @@ import {
 
 export default function Notifications() {
     const { user } = useAuth();
-
+    const {
+        decrementUnreadCount,
+        clearUnreadCount,
+    } = useNotifications();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -49,7 +53,7 @@ export default function Notifications() {
 
         loadNotifications();
     }, []);
-    
+
     // --------------------------------------------------
     // Real-time notifications
     // --------------------------------------------------
@@ -68,12 +72,20 @@ export default function Notifications() {
                 notification
             );
 
-            setNotifications(
-                (current) => [
+            setNotifications((current) => {
+                const alreadyExists = current.some(
+                    (item) => item.id === notification.id
+                );
+
+                if (alreadyExists) {
+                    return current;
+                }
+
+                return [
                     notification,
                     ...current,
-                ]
-            );
+                ];
+            });
         };
 
         window.addEventListener(
@@ -119,6 +131,7 @@ export default function Notifications() {
                     })
                 )
             );
+            clearUnreadCount();
         } catch (error) {
             console.error(
                 "Failed to mark all notifications as read:",
@@ -153,6 +166,7 @@ export default function Notifications() {
                         : item
                 )
             );
+            decrementUnreadCount();
         } catch (error) {
             console.error(
                 "Failed to mark notification as read:",

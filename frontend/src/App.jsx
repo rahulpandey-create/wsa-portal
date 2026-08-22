@@ -81,10 +81,10 @@ export default function App() {
                         element={<Notifications />}
                     />
 
-                    <Route
+                    {/* <Route
                         path="/create-job"
                         element={<CreateJob />}
-                    />
+                    /> */}
 
                     <Route
                         path="/create-sponsored-job"

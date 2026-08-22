@@ -60,11 +60,11 @@ export default function Sidebar({
             icon: "⌂",
             label: "Dashboard",
         },
-        {
-            path: "/create-job",
-            icon: "＋",
-            label: "Create Job",
-        },
+        // {
+        //     path: "/create-job",
+        //     icon: "＋",
+        //     label: "Create Job",
+        // },
         {
             path: "/upload-job",
             icon: "⇧",
@@ -319,7 +319,7 @@ export const adminRoutes = [
 
 export const associateRoutes = [
     "/dashboard",
-    "/create-job",
+    // "/create-job",
     "/upload-job",
     "/my-jobs",
     "/sponsored-jobs",

@@ -11,6 +11,7 @@ export default function CreateJob({ sponsored = false }) {
         title: "",
         company: "",
         location: "Perth, WA",
+        visa: "",
         job_type: "Full-time",
         salary: "",
         positions: "1",
@@ -57,6 +58,9 @@ export default function CreateJob({ sponsored = false }) {
             };
 
             if (sponsored) {
+                jobData.visa = form.visa;
+            }
+            if (sponsored) {
                 await createSponsoredJob(jobData);
 
                 alert(
@@ -81,11 +85,11 @@ export default function CreateJob({ sponsored = false }) {
 
             alert(
                 error?.data?.message ||
-                    (
-                        sponsored
-                            ? "Failed to create sponsored job."
-                            : "Failed to submit job."
-                    )
+                (
+                    sponsored
+                        ? "Failed to create sponsored job."
+                        : "Failed to submit job."
+                )
             );
         }
     };
@@ -237,7 +241,41 @@ export default function CreateJob({ sponsored = false }) {
                                 }}
                             />
                         </div>
+                        {/* Visa */}
+                        {sponsored && (
+                            <div>
+                                <label
+                                    style={{
+                                        display: "block",
+                                        marginBottom: "7px",
+                                        fontSize: "14px",
+                                        fontWeight: "700",
+                                        color: "#071d49",
+                                    }}
+                                >
+                                    Visa
+                                </label>
 
+                                <input
+                                    type="text"
+                                    name="visa"
+                                    value={form.visa}
+                                    onChange={handleChange}
+                                    placeholder="e.g. 482 Sponsorship"
+                                    style={{
+                                        width: "100%",
+                                        height: "43px",
+                                        padding: "0 12px",
+                                        border: "1px solid #cbd8e8",
+                                        borderRadius: "8px",
+                                        fontSize: "15px",
+                                        color: "#071d49",
+                                        outline: "none",
+                                        boxSizing: "border-box",
+                                    }}
+                                />
+                            </div>
+                        )}
                         {/* Employment Type */}
                         <div>
                             <label

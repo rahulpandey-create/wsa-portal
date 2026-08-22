@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { getPageTitle } from "./Sidebar";
 import { useAuth } from "../context/AuthContext";
+import { useNotifications } from "../context/NotificationContext";
 
 export default function Topbar({
     role,
@@ -11,7 +12,7 @@ export default function Topbar({
 }) {
     const location = useLocation();
     const { user, logout } = useAuth();
-
+    const { unreadCount } = useNotifications();
     const [profileOpen, setProfileOpen] = useState(false);
 
     const title = getPageTitle(location.pathname);
@@ -63,22 +64,48 @@ export default function Topbar({
                     aria-label="Open sidebar"
                     onClick={() => setSidebarOpen(true)}
                     className="
-                        flex
-                        lg:hidden
-                        h-[40px]
-                        w-[40px]
-                        items-center
-                        justify-center
-                        rounded-[8px]
-                        border
-                        border-[#dce5f0]
-                        bg-white
-                        text-[22px]
-                        text-[#071d41]
-                        hover:bg-[#f3f6fb]
-                    "
+        relative
+        flex
+        lg:hidden
+        h-[40px]
+        w-[40px]
+        items-center
+        justify-center
+        rounded-[8px]
+        border
+        border-[#dce5f0]
+        bg-white
+        text-[22px]
+        text-[#071d41]
+        hover:bg-[#f3f6fb]
+    "
                 >
                     ☰
+
+                    {unreadCount > 0 && (
+                        <span
+                            className="
+                absolute
+                -right-[7px]
+                -top-[7px]
+                flex
+                min-h-[20px]
+                min-w-[20px]
+                items-center
+                justify-center
+                rounded-full
+                bg-[#e94a4a]
+                px-[5px]
+                text-[10px]
+                font-extrabold
+                leading-none
+                text-white
+                shadow-[0_2px_6px_rgba(233,74,74,0.35)]
+            "
+                        >
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                    )}
                 </button>
 
                 <h1
