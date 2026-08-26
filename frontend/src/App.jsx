@@ -8,12 +8,14 @@ import MyJobs from "./pages/MyJobs";
 
 import { useAuth } from "./context/AuthContext";
 import Register from "./pages/Register";
+import CreateAssociateAccount from "./pages/CreateAssociateAccount";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Jobs from "./pages/Jobs";
 import JobApprovals from "./pages/JobApprovals";
 import Associates from "./pages/Associates";
+import AssociateAccountSetup from "./pages/AssociateAccountSetup";
 import Profiles from "./pages/Profiles";
 import Notifications from "./pages/Notifications";
 import CreateJob from "./pages/CreateJob";
@@ -43,6 +45,11 @@ export default function App() {
                 <Route
                     path="/register"
                     element={<Register />}
+
+                />
+                <Route
+                    path="/create-associate-account"
+                    element={<CreateAssociateAccount />}
                 />
                 <Route
                     element={

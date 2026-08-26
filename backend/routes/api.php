@@ -11,11 +11,12 @@ use App\Http\Controllers\NotificationController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\AssociateRegistrationController;
 
 
-
-Route::post('register', [AuthenticationController::class, 'register']);
+// Route::post('register', [AuthenticationController::class, 'register']);
 Route::post('login', [AuthenticationController::class, 'login']);
+Route::post('associate-registrations', [AssociateRegistrationController::class, 'store']);
 
 Route::post('/setup-admin', function (Request $request) {
     $request->validate([
@@ -34,7 +35,7 @@ Route::post('/setup-admin', function (Request $request) {
     $user = User::create([
         'name' => $request->name,
         'email' => $request->email,
-        'password' => Hash::make($request->password),
+        'password' => $request->password,
         'role' => 'admin',
     ]);
 
@@ -84,6 +85,21 @@ Route::post('/email/verification-notification', function (Request $request) {
     ]);
 
 })->middleware(['auth:sanctum']);
+
+Route::get(
+    '/associate-account/{token}',
+    [AssociateRegistrationController::class, 'validateSetupToken']
+);
+
+Route::post(
+    '/associate-account/{token}',
+    [AssociateRegistrationController::class, 'createAccount']
+);
+
+Route::post(
+    'associate-account-setup',
+    [AssociateRegistrationController::class, 'setupAccount']
+);
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -164,6 +180,27 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware('admin')->group(function () {
 
         /*
+    |--------------------------------------------------------------------------
+    | Associate Registration Administration
+    |--------------------------------------------------------------------------
+    */
+
+        Route::get(
+            'associate-registrations',
+            [AssociateRegistrationController::class, 'index']
+        );
+
+        Route::patch(
+            'associate-registrations/{registration}/approve',
+            [AssociateRegistrationController::class, 'approve']
+        );
+
+        Route::patch(
+            'associate-registrations/{registration}/reject',
+            [AssociateRegistrationController::class, 'reject']
+        );
+
+        /*
         |--------------------------------------------------------------------------
         | Job Administration
         |--------------------------------------------------------------------------
@@ -234,7 +271,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
             'job-posts/{jobPost}',
             [JobPostController::class, 'destroy']
         );
-
 
         /*
         |--------------------------------------------------------------------------

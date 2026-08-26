@@ -5,6 +5,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Notification;
 use App\Models\User;
 class AuthenticationController extends Controller
 {
@@ -20,7 +23,7 @@ class AuthenticationController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role' => 'associate',
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
         ]);
 
         $user->sendEmailVerificationNotification();

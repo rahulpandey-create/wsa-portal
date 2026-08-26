@@ -21,6 +21,10 @@ import {
 
 import { getApplications } from "../api/applications";
 
+import {
+    getAssociateRegistrations,
+} from "../api/associateRegistrations";
+
 
 
 export default function Dashboard() {
@@ -38,6 +42,25 @@ export default function Dashboard() {
 
     const [pendingJobs, setPendingJobs] =
         useState([]);
+
+    const [associateRegistrations, setAssociateRegistrations] =
+        useState([]);
+
+    const [registrationStatus, setRegistrationStatus] =
+        useState("Pending");
+
+    const [registrationLoading, setRegistrationLoading] =
+        useState(false);
+
+    const [registrationCounts, setRegistrationCounts] =
+        useState({
+            Pending: 0,
+            Approved: 0,
+            Rejected: 0,
+            Active: 0,
+        });
+
+    const registrationActionLoading = null;
 
     const [profiles, setProfiles] =
         useState([]);
@@ -147,6 +170,33 @@ export default function Dashboard() {
                             [];
 
                     setNotifications(notificationData);
+
+                    // Registration UI is loaded separately so a registration
+                    // endpoint issue cannot break the main admin dashboard.
+                    try {
+                        const registrationsResponse =
+                            await getAssociateRegistrations("Pending");
+
+                        const registrationData =
+                            Array.isArray(registrationsResponse)
+                                ? registrationsResponse
+                                : registrationsResponse?.data ||
+                                registrationsResponse?.registrations ||
+                                [];
+
+                        setAssociateRegistrations(registrationData);
+
+                        if (registrationsResponse?.counts) {
+                            setRegistrationCounts(
+                                registrationsResponse.counts
+                            );
+                        }
+                    } catch (registrationError) {
+                        console.error(
+                            "Failed to load associate registrations:",
+                            registrationError
+                        );
+                    }
 
                     return;
                 }
@@ -622,6 +672,42 @@ export default function Dashboard() {
 
 
     // --------------------------------------------------
+    // Associate Registration Status Filter
+    // --------------------------------------------------
+
+    const loadAssociateRegistrations = async (status) => {
+
+        try {
+            setRegistrationLoading(true);
+
+            const response = await getAssociateRegistrations(status);
+
+            const registrationData =
+                Array.isArray(response)
+                    ? response
+                    : response?.data ||
+                    response?.registrations ||
+                    [];
+
+            setAssociateRegistrations(registrationData);
+
+            if (response?.counts) {
+                setRegistrationCounts(response.counts);
+            }
+
+            setRegistrationStatus(status);
+
+        } catch (error) {
+            console.error(
+                "Failed to load associate registrations:",
+                error
+            );
+        } finally {
+            setRegistrationLoading(false);
+        }
+    };
+
+    // --------------------------------------------------
     // Authentication Loading
     // --------------------------------------------------
 
@@ -689,6 +775,8 @@ export default function Dashboard() {
     }
 
 
+    const filteredAssociateRegistrations = associateRegistrations;
+
     /*
     |--------------------------------------------------------------------------
     | Admin Dashboard
@@ -752,6 +840,207 @@ export default function Dashboard() {
 
                 </div>
 
+
+                {/* ---------------------------------------------------------
+    Associate Registration Requests
+--------------------------------------------------------- */}
+
+                <section className="overflow-hidden rounded-[15px] border border-[#d9e2ef] bg-white shadow-[0_8px_24px_rgba(30,60,100,0.07)]">
+
+                    <div className="border-b border-[#d9e2ef] px-[20px] py-[18px]">
+
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+                            <div>
+                                <h2 className="text-[16px] font-extrabold text-[#071d49]">
+                                    Associate Registration Requests
+                                </h2>
+
+                                <p className="mt-1 text-[13px] text-[#52688f]">
+                                    Review and manage associate registrations.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+
+                                {[
+                                    "Pending",
+                                    "Approved",
+                                    "Rejected",
+                                    "Active",
+                                ].map((status) => (
+                                    <button
+                                        key={status}
+                                        type="button"
+                                        disabled={registrationLoading}
+                                        onClick={() => loadAssociateRegistrations(status)}
+                                        className={`rounded-[9px] px-[12px] py-[8px] text-[12px] font-bold transition ${registrationStatus === status
+                                            ? "bg-[#1f4fc7] text-white"
+                                            : "border border-[#d7e1ee] bg-white text-[#52688f] hover:bg-[#f4f7fb]"
+                                            } disabled:cursor-not-allowed disabled:opacity-60`}
+                                    >
+                                        {status}
+
+                                        <span
+                                            className={`ml-2 rounded-full px-[6px] py-[2px] text-[10px] ${registrationStatus === status
+                                                ? "bg-white/20 text-white"
+                                                : "bg-[#eef3fa] text-[#52688f]"
+                                                }`}
+                                        >
+                                            {registrationCounts[status] ?? 0}
+                                        </span>
+                                    </button>
+                                ))}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div className="overflow-x-auto">
+
+                        {filteredAssociateRegistrations.length === 0 ? (
+
+                            <div className="py-10 text-center text-sm text-[#52688f]">
+                                No {registrationStatus.toLowerCase()} associate registrations found.
+                            </div>
+
+                        ) : (
+
+                            <table className="min-w-full text-left">
+
+                                <thead>
+                                    <tr className="border-b border-[#d9e2ef] bg-[#f8faff]">
+
+                                        <th className="px-5 py-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#52688f]">
+                                            Business
+                                        </th>
+
+                                        <th className="px-5 py-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#52688f]">
+                                            Representative
+                                        </th>
+
+                                        <th className="px-5 py-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#52688f]">
+                                            Country
+                                        </th>
+
+                                        <th className="px-5 py-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#52688f]">
+                                            Email
+                                        </th>
+
+                                        <th className="px-5 py-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#52688f]">
+                                            Status
+                                        </th>
+
+                                        {registrationStatus === "Pending" && (
+                                            <th className="px-5 py-3 text-[11px] font-extrabold uppercase tracking-[0.04em] text-[#52688f]">
+                                                Actions
+                                            </th>
+                                        )}
+
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    {filteredAssociateRegistrations.map(
+                                        (registration) => (
+
+                                            <tr
+                                                key={registration.id}
+                                                className="border-b border-[#edf1f7] last:border-b-0"
+                                            >
+
+                                                <td className="px-5 py-4">
+                                                    <div className="text-[13px] font-bold text-[#071d49]">
+                                                        {registration.business_name}
+                                                    </div>
+
+                                                    <div className="mt-1 text-[11px] text-[#52688f]">
+                                                        {registration.business_type}
+                                                    </div>
+                                                </td>
+
+                                                <td className="px-5 py-4 text-[13px] text-[#071d49]">
+                                                    {registration.representative_name}
+                                                </td>
+
+                                                <td className="px-5 py-4 text-[13px] text-[#071d49]">
+                                                    {registration.country}
+                                                </td>
+
+                                                <td className="px-5 py-4 text-[13px] text-[#071d49]">
+                                                    {registration.email}
+                                                </td>
+
+                                                <td className="px-5 py-4">
+
+                                                    <span
+                                                        className={`inline-flex rounded-full px-[9px] py-[4px] text-[11px] font-bold ${registration.status === "Pending"
+                                                            ? "bg-[#fff4d6] text-[#9a6b00]"
+                                                            : registration.status === "Approved"
+                                                                ? "bg-[#e7f0ff] text-[#1f4fc7]"
+                                                                : registration.status === "Rejected"
+                                                                    ? "bg-[#ffe9e9] text-[#c63b3b]"
+                                                                    : "bg-[#e6f8f0] text-[#16845b]"
+                                                            }`}
+                                                    >
+                                                        {registration.status}
+                                                    </span>
+
+                                                </td>
+
+                                                {registrationStatus === "Pending" && (
+
+                                                    <td className="px-5 py-4">
+
+                                                        <div className="flex flex-wrap gap-2">
+
+                                                            <button
+                                                                type="button"
+                                                                disabled={true}
+                                                                title="Temporarily disabled"
+                                                                className="rounded-[8px] bg-[#16a66f] px-[11px] py-[7px] text-[11px] font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            >
+                                                                {registrationActionLoading ===
+                                                                    registration.id
+                                                                    ? "..."
+                                                                    : "Approve"}
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                disabled={true}
+                                                                title="Temporarily disabled"
+                                                                className="rounded-[8px] bg-[#d9534f] px-[11px] py-[7px] text-[11px] font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            >
+                                                                {registrationActionLoading ===
+                                                                    registration.id
+                                                                    ? "..."
+                                                                    : "Reject"}
+                                                            </button>
+
+                                                        </div>
+
+                                                    </td>
+
+                                                )}
+
+                                            </tr>
+
+                                        )
+                                    )}
+
+                                </tbody>
+
+                            </table>
+
+                        )}
+
+                    </div>
+
+                </section>
 
                 {/* ---------------------------------------------------------
                     Pending Jobs + Recent Activity
@@ -823,86 +1112,96 @@ export default function Dashboard() {
                     </section>
 
 
-                    {/* Recent Activity */}
+                    {/* Latest Notifications */}
 
-                    <div className="px-[18px]">
+                    <section className="overflow-hidden rounded-[15px] border border-[#d9e2ef] bg-white shadow-[0_8px_24px_rgba(30,60,100,0.07)]">
 
-                        {notifications.length === 0 ? (
+                        <PanelHeader
+                            title="Latest Notifications"
+                            action={
+                                <Link
+                                    to="/notifications"
+                                    className="inline-flex h-[34px] items-center rounded-[9px] border border-[#d7e1ee] bg-white px-[11px] text-[13px] font-bold text-[#071d49] transition hover:bg-[#f4f7fb]"
+                                >
+                                    View all
+                                </Link>
+                            }
+                        />
 
-                            <div className="py-8 text-center text-sm text-[#52688f]">
-                                No recent activity.
-                            </div>
+                        <div className="px-[18px]">
 
-                        ) : (
+                            {notifications.length === 0 ? (
 
-                            notifications
-                                .filter((notification) => {
-                                    if (notification.type !== "job_submitted") {
-                                        return true;
-                                    }
+                                <div className="py-8 text-center text-sm text-[#52688f]">
+                                    No notifications found.
+                                </div>
 
-                                    const relatedJob = pendingJobs.find(
-                                        (job) =>
-                                            String(job.id) ===
-                                            String(notification.job_id)
-                                    );
+                            ) : (
 
-                                    return !!relatedJob;
-                                })
-                                .slice(0, 5)
-                                .map((notification) => (
+                                notifications
+                                    .filter((notification) => {
+                                        if (notification.type !== "job_submitted") {
+                                            return true;
+                                        }
 
-                                    <div
-                                        key={notification.id}
-                                        className="flex gap-3 border-b border-[#e7edf5] py-[17px] last:border-b-0"
-                                    >
+                                        const relatedJob = pendingJobs.find(
+                                            (job) =>
+                                                String(job.id) ===
+                                                String(notification.job_id)
+                                        );
 
-                                        {/* Icon */}
+                                        return !!relatedJob;
+                                    })
+                                    .slice(0, 5)
+                                    .map((notification) => (
 
-                                        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
-                                            🔔
+                                        <div
+                                            key={notification.id}
+                                            className="flex gap-3 border-b border-[#e7edf5] py-[17px] last:border-b-0"
+                                        >
+
+                                            <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-[#eaf1ff] text-[15px] text-[#1857c9]">
+                                                🔔
+                                            </div>
+
+                                            <div className="min-w-0">
+
+                                                <p className="text-[13px] leading-[18px] text-[#071d49]">
+
+                                                    <strong>
+                                                        {notification.title}
+                                                    </strong>
+
+                                                    <br />
+
+                                                    {notification.message}
+
+                                                </p>
+
+                                                <small className="text-[12px] text-[#52688f]">
+
+                                                    {new Date(notification.created_at).toLocaleString("en-IN", {
+                                                        day: "2-digit",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                        hour12: true,
+                                                    })}
+
+                                                </small>
+
+                                            </div>
+
                                         </div>
 
+                                    ))
 
-                                        {/* Notification Content */}
+                            )}
 
-                                        <div className="min-w-0">
+                        </div>
 
-                                            <p className="text-[13px] leading-[18px] text-[#071d49]">
-
-                                                <strong>
-                                                    {notification.title}
-                                                </strong>
-
-                                                <br />
-
-                                                {notification.message}
-
-                                            </p>
-
-
-                                            <small className="text-[12px] text-[#52688f]">
-
-                                                {new Date(notification.created_at).toLocaleString("en-IN", {
-                                                    day: "2-digit",
-                                                    month: "short",
-                                                    year: "numeric",
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                                    hour12: true,
-                                                })}
-
-                                            </small>
-
-                                        </div>
-
-                                    </div>
-
-                                ))
-
-                        )}
-
-                    </div>
+                    </section>
 
                 </div>
 
@@ -1256,12 +1555,6 @@ export default function Dashboard() {
 
                 You receive a portal notification whenever Admin approves a job.
 
-                <br />
-                <br />
-
-                In production this action will also trigger an email to all
-                registered Associates.
-
             </div>
 
         </div>
@@ -1400,10 +1693,6 @@ function DashboardSkeleton({ role }) {
                         showActions
                     />
 
-
-                    {/* Notice */}
-
-                    <div className="h-[72px] w-full animate-pulse rounded-[11px] bg-[#e5ebf4]" />
 
                 </>
 
