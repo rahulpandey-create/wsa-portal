@@ -1,28 +1,191 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { apiRequest } from "../api/client";
+
+function CustomSelect({
+    name,
+    value,
+    onChange,
+    options,
+    placeholder,
+    required = false,
+}) {
+    const [open, setOpen] = useState(false);
+    const selectRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                selectRef.current &&
+                !selectRef.current.contains(event.target)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener(
+                "mousedown",
+                handleClickOutside
+            );
+        };
+    }, []);
+
+    const selectedOption = options.find(
+        (option) => option.value === value
+    );
+
+    const handleSelect = (option) => {
+        onChange({
+            target: {
+                name,
+                value: option.value,
+                type: "select-one",
+                checked: false,
+            },
+        });
+
+        setOpen(false);
+    };
+
+    return (
+        <div
+            ref={selectRef}
+            style={{
+                position: "relative",
+                width: "100%",
+            }}
+        >
+            <button
+                type="button"
+                onClick={() => setOpen((previous) => !previous)}
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                style={{
+                    width: "100%",
+                    height: "44px",
+                    padding: "0 38px 0 12px",
+                    border: open
+                        ? "1px solid #1747b8"
+                        : "1px solid #d9e2ef",
+                    borderRadius: "8px",
+                    boxSizing: "border-box",
+                    background: "#ffffff",
+                    color: selectedOption
+                        ? "#1d2939"
+                        : "#98a2b3",
+                    fontSize: "14px",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    position: "relative",
+                    outline: "none",
+                }}
+            >
+                {selectedOption?.label || placeholder}
+
+                <span
+                    style={{
+                        position: "absolute",
+                        right: "14px",
+                        top: "50%",
+                        width: "7px",
+                        height: "7px",
+                        borderRight: "1.5px solid #667085",
+                        borderBottom: "1.5px solid #667085",
+                        transform: open
+                            ? "translateY(-65%) rotate(225deg)"
+                            : "translateY(-65%) rotate(45deg)",
+                        transition: "transform 0.15s ease",
+                    }}
+                />
+            </button>
+
+            {open && (
+                <div
+                    role="listbox"
+                    style={{
+                        position: "absolute",
+                        zIndex: 100,
+                        top: "calc(100% + 4px)",
+                        left: 0,
+                        right: 0,
+                        background: "#ffffff",
+                        border: "1px solid #d9e2ef",
+                        borderRadius: "8px",
+                        boxShadow:
+                            "0 10px 25px rgba(30, 60, 100, 0.12)",
+                        overflow: "hidden",
+                    }}
+                >
+                    {options.map((option) => (
+                        <button
+                            key={option.value}
+                            type="button"
+                            role="option"
+                            aria-selected={value === option.value}
+                            onClick={() => handleSelect(option)}
+                            style={{
+                                display: "block",
+                                width: "100%",
+                                border: "none",
+                                background:
+                                    value === option.value
+                                        ? "#f3f6fb"
+                                        : "#ffffff",
+                                color: "#1d2939",
+                                textAlign: "left",
+                                padding: "11px 12px",
+                                fontSize: "14px",
+                                cursor: "pointer",
+                            }}
+                            onMouseEnter={(event) => {
+                                event.currentTarget.style.background =
+                                    "#f3f6fb";
+                            }}
+                            onMouseLeave={(event) => {
+                                event.currentTarget.style.background =
+                                    value === option.value
+                                        ? "#f3f6fb"
+                                        : "#ffffff";
+                            }}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function Register() {
     const navigate = useNavigate();
-    const { register } = useAuth();
 
     const [form, setForm] = useState({
-        name: "",
+        business_name: "",
+        representative_name: "",
+        business_type: "",
+        country: "",
         email: "",
-        password: "",
-        password_confirmation: "",
+        phone: "",
+        website: "",
+        business_description: "",
+        referral_source: "",
+        declaration: false,
     });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] =
-        useState(false);
+    const [success, setSuccess] = useState(false);
 
     const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+
         setForm((previous) => ({
             ...previous,
-            [e.target.name]: e.target.value,
+            [name]: type === "checkbox" ? checked : value,
         }));
     };
 
@@ -31,29 +194,29 @@ export default function Register() {
 
         setError("");
 
-        if (
-            form.password !==
-            form.password_confirmation
-        ) {
-            setError("Passwords do not match.");
+        if (!form.declaration) {
+            setError(
+                "Please confirm the declaration before submitting."
+            );
             return;
         }
 
         try {
             setLoading(true);
 
-            await register(
-                form.name,
-                form.email,
-                form.password
-            );
-            alert(
-                "Registration successful. Please verify your email before logging in."
-            );
-            navigate("/");
+            await apiRequest("/associate-registrations", {
+                method: "POST",
+                body: JSON.stringify(form),
+            });
+
+            setSuccess(true);
+
+            setTimeout(() => {
+                navigate("/");
+            }, 5000);
         } catch (error) {
             console.error(
-                "Registration failed:",
+                "Registration submission failed:",
                 error
             );
 
@@ -66,78 +229,231 @@ export default function Register() {
         }
     };
 
+    const labelStyle = {
+        display: "block",
+        marginBottom: "7px",
+        color: "#0a2a5e",
+        fontSize: "12px",
+        fontWeight: "700",
+    };
+
+    const requiredStyle = {
+        color: "#d92d20",
+    };
+
+    const inputStyle = {
+        width: "100%",
+        height: "44px",
+        padding: "0 12px",
+        border: "1px solid #d9e2ef",
+        borderRadius: "8px",
+        boxSizing: "border-box",
+        background: "#ffffff",
+        color: "#1d2939",
+        fontSize: "14px",
+        outline: "none",
+    };
+
+    const fieldStyle = {
+        marginBottom: "18px",
+    };
+
+    const businessTypeOptions = [
+        {
+            value: "Placement Consultant",
+            label: "Placement Consultant",
+        },
+        {
+            value: "Education Agent",
+            label: "Education Agent",
+        },
+        {
+            value: "Migration Professional",
+            label: "Migration Professional",
+        },
+        {
+            value: "Business Consultant",
+            label: "Business Consultant",
+        },
+        {
+            value: "Independent Professional",
+            label: "Independent Professional",
+        },
+        {
+            value: "Other",
+            label: "Other",
+        },
+    ];
+
+    const referralOptions = [
+        {
+            value: "Business Referral",
+            label: "Business Referral",
+        },
+        {
+            value: "Existing Associate",
+            label: "Existing Associate",
+        },
+        {
+            value: "Google Search",
+            label: "Google Search",
+        },
+        {
+            value: "Social Media",
+            label: "Social Media",
+        },
+        {
+            value: "Industry Event",
+            label: "Industry Event",
+        },
+        {
+            value: "Other",
+            label: "Other",
+        },
+    ];
+
+    if (success) {
+        return (
+            <div
+                style={{
+                    minHeight: "100vh",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#f5f7fb",
+                    padding: "30px 20px",
+                    boxSizing: "border-box",
+                }}
+            >
+                <div
+                    style={{
+                        width: "100%",
+                        maxWidth: "560px",
+                        background: "#ffffff",
+                        borderRadius: "14px",
+                        padding: "36px",
+                        boxShadow:
+                            "0 10px 30px rgba(30, 60, 100, 0.08)",
+                        boxSizing: "border-box",
+                        textAlign: "center",
+                    }}
+                >
+                    <h1
+                        style={{
+                            margin: "0 0 16px",
+                            color: "#0a2a5e",
+                            fontSize: "25px",
+                            fontWeight: "800",
+                        }}
+                    >
+                        Registration Submitted
+                    </h1>
+
+                    <p
+                        style={{
+                            margin: "0 0 14px",
+                            color: "#475467",
+                            fontSize: "14px",
+                            lineHeight: "1.6",
+                        }}
+                    >
+                        Thank you for registering your interest
+                        in becoming a WSA Associate.
+                    </p>
+
+                    <p
+                        style={{
+                            margin: "0 0 14px",
+                            color: "#475467",
+                            fontSize: "14px",
+                            lineHeight: "1.6",
+                        }}
+                    >
+                        Your registration has been received
+                        and will be reviewed by the Work & Study
+                        Australia team.
+                    </p>
+
+                    <p
+                        style={{
+                            margin: 0,
+                            color: "#475467",
+                            fontSize: "14px",
+                            lineHeight: "1.6",
+                        }}
+                    >
+                        If your registration is approved, we
+                        will email you instructions to activate
+                        your Associate account and create your
+                        password.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div
             style={{
                 minHeight: "100vh",
                 display: "flex",
-                alignItems: "center",
                 justifyContent: "center",
                 background: "#f5f7fb",
-                padding: "20px",
+                padding: "40px 20px",
+                boxSizing: "border-box",
             }}
         >
             <div
                 style={{
                     width: "100%",
-                    maxWidth: "460px",
+                    maxWidth: "820px",
                     background: "#ffffff",
-                    borderRadius: "14px",
-                    padding: "32px",
+                    borderRadius: "8px",
+                    padding: "30px 32px 24px",
                     boxShadow:
-                        "0 10px 30px rgba(30, 60, 100, 0.08)",
+                        "0 8px 24px rgba(30, 60, 100, 0.08)",
+                    boxSizing: "border-box",
                 }}
             >
-                {/* Back to Login */}
                 <div
                     style={{
-                        marginBottom: "18px",
+                        marginBottom: "25px",
                     }}
                 >
-                    <Link
-                        to="/"
+                    <h1
                         style={{
-                            color: "#1747b8",
-                            fontSize: "14px",
-                            fontWeight: "700",
-                            textDecoration: "none",
+                            margin: "0 0 7px",
+                            color: "#183d83",
+                            fontSize: "24px",
+                            fontWeight: "600",
                         }}
                     >
-                        ← Back to Login
-                    </Link>
+                        Associate Enquiry Form
+                    </h1>
+
+                    <p
+                        style={{
+                            margin: 0,
+                            color: "#667085",
+                            fontSize: "12px",
+                        }}
+                    >
+                        Fields marked with{" "}
+                        <span style={requiredStyle}>*</span>{" "}
+                        are required.
+                    </p>
                 </div>
-
-                <h1
-                    style={{
-                        margin: "0 0 8px",
-                        color: "#112f80",
-                        fontSize: "26px",
-                        fontWeight: "800",
-                    }}
-                >
-                    Become an Associate
-                </h1>
-
-                <p
-                    style={{
-                        margin: "0 0 24px",
-                        color: "#667085",
-                        fontSize: "14px",
-                    }}
-                >
-                    Create your associate account
-                    to access the portal.
-                </p>
 
                 {error && (
                     <div
                         style={{
                             marginBottom: "18px",
-                            padding: "12px",
-                            borderRadius: "8px",
+                            padding: "12px 14px",
+                            borderRadius: "7px",
                             background: "#fff1f1",
                             color: "#c62828",
-                            fontSize: "14px",
+                            fontSize: "13px",
+                            fontWeight: "600",
                         }}
                     >
                         {error}
@@ -145,175 +461,253 @@ export default function Register() {
                 )}
 
                 <form onSubmit={handleSubmit}>
+                    {/* Business + Representative */}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                                "repeat(2, minmax(0, 1fr))",
+                            gap: "18px",
+                        }}
+                    >
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>
+                                Business Name{" "}
+                                <span style={requiredStyle}>*</span>
+                            </label>
 
-                    {/* Name */}
-                    <div style={{ marginBottom: "16px" }}>
-                        <label>Name</label>
-
-                        <input
-                            type="text"
-                            name="name"
-                            value={form.name}
-                            onChange={handleChange}
-                            required
-                            style={{
-                                width: "100%",
-                                marginTop: "7px",
-                                padding: "11px 12px",
-                                border: "1px solid #d9e2ef",
-                                borderRadius: "8px",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                    </div>
-
-                    {/* Email */}
-                    <div style={{ marginBottom: "16px" }}>
-                        <label>Email</label>
-
-                        <input
-                            type="email"
-                            name="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                            style={{
-                                width: "100%",
-                                marginTop: "7px",
-                                padding: "11px 12px",
-                                border: "1px solid #d9e2ef",
-                                borderRadius: "8px",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                    </div>
-
-                    {/* Password */}
-                    <div style={{ marginBottom: "16px" }}>
-                        <label>Password</label>
-
-                        <div
-                            style={{
-                                position: "relative",
-                                marginTop: "7px",
-                            }}
-                        >
                             <input
-                                type={
-                                    showPassword
-                                        ? "text"
-                                        : "password"
-                                }
-                                name="password"
-                                value={form.password}
+                                type="text"
+                                name="business_name"
+                                value={form.business_name}
                                 onChange={handleChange}
                                 required
-                                style={{
-                                    width: "100%",
-                                    padding:
-                                        "11px 65px 11px 12px",
-                                    border:
-                                        "1px solid #d9e2ef",
-                                    borderRadius: "8px",
-                                    boxSizing: "border-box",
-                                }}
+                                autoComplete="organization"
+                                style={inputStyle}
                             />
+                        </div>
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowPassword(
-                                        (previous) =>
-                                            !previous
-                                    )
-                                }
-                                style={{
-                                    position: "absolute",
-                                    right: "10px",
-                                    top: "50%",
-                                    transform:
-                                        "translateY(-50%)",
-                                    border: "none",
-                                    background:
-                                        "transparent",
-                                    color: "#112f80",
-                                    fontSize: "13px",
-                                    fontWeight: "700",
-                                    cursor: "pointer",
-                                    padding: "4px",
-                                }}
-                            >
-                                {showPassword
-                                    ? "Hide"
-                                    : "Show"}
-                            </button>
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>
+                                Representative Name{" "}
+                                <span style={requiredStyle}>*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="representative_name"
+                                value={form.representative_name}
+                                onChange={handleChange}
+                                required
+                                autoComplete="name"
+                                style={inputStyle}
+                            />
                         </div>
                     </div>
 
-                    {/* Confirm Password */}
-                    <div style={{ marginBottom: "22px" }}>
-                        <label>
-                            Confirm Password
+                    {/* Business Type + Country */}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                                "repeat(2, minmax(0, 1fr))",
+                            gap: "18px",
+                        }}
+                    >
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>
+                                Business Type{" "}
+                                <span style={requiredStyle}>*</span>
+                            </label>
+
+                            <CustomSelect
+                                name="business_type"
+                                value={form.business_type}
+                                onChange={handleChange}
+                                options={businessTypeOptions}
+                                placeholder="Select Business Type"
+                                required
+                            />
+                        </div>
+
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>
+                                Country{" "}
+                                <span style={requiredStyle}>*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="country"
+                                value={form.country}
+                                onChange={handleChange}
+                                required
+                                style={inputStyle}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Email + Phone */}
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                                "repeat(2, minmax(0, 1fr))",
+                            gap: "18px",
+                        }}
+                    >
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>
+                                Email Address{" "}
+                                <span style={requiredStyle}>*</span>
+                            </label>
+
+                            <input
+                                type="email"
+                                name="email"
+                                value={form.email}
+                                onChange={handleChange}
+                                required
+                                autoComplete="email"
+                                style={inputStyle}
+                            />
+                        </div>
+
+                        <div style={fieldStyle}>
+                            <label style={labelStyle}>
+                                Phone Number{" "}
+                                <span style={requiredStyle}>*</span>
+                            </label>
+
+                            <input
+                                type="tel"
+                                name="phone"
+                                value={form.phone}
+                                onChange={handleChange}
+                                required
+                                autoComplete="tel"
+                                style={inputStyle}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Website */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>
+                            Website{" "}
+                            <span
+                                style={{
+                                    color: "#667085",
+                                    fontWeight: "400",
+                                }}
+                            >
+                                (Optional)
+                            </span>
                         </label>
 
-                        <div
+                        <input
+                            type="url"
+                            name="website"
+                            value={form.website}
+                            onChange={handleChange}
+                            style={inputStyle}
+                        />
+                    </div>
+
+                    {/* Business Description */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>
+                            Tell Us About Your Business{" "}
+                            <span style={requiredStyle}>*</span>
+                        </label>
+
+                        <textarea
+                            name="business_description"
+                            value={form.business_description}
+                            onChange={handleChange}
+                            required
                             style={{
-                                position: "relative",
-                                marginTop: "7px",
+                                width: "100%",
+                                minHeight: "140px",
+                                padding: "11px 12px",
+                                border: "1px solid #d9e2ef",
+                                borderRadius: "8px",
+                                boxSizing: "border-box",
+                                resize: "vertical",
+                                fontFamily: "inherit",
+                                fontSize: "14px",
+                                color: "#1d2939",
+                                outline: "none",
+                            }}
+                        />
+                    </div>
+
+                    {/* Referral */}
+                    <div style={fieldStyle}>
+                        <label style={labelStyle}>
+                            How Did You Hear About WSA?{" "}
+                            <span style={requiredStyle}>*</span>
+                        </label>
+
+                        <CustomSelect
+                            name="referral_source"
+                            value={form.referral_source}
+                            onChange={handleChange}
+                            options={referralOptions}
+                            placeholder="Select an option"
+                            required
+                        />
+                    </div>
+
+                    {/* Declaration */}
+                    <div
+                        style={{
+                            marginTop: "4px",
+                            marginBottom: "18px",
+                            padding: "14px 15px",
+                            border: "1px solid #d9e2ef",
+                            borderRadius: "8px",
+                            background: "#f8fafc",
+                        }}
+                    >
+                        <label
+                            style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "10px",
+                                cursor: "pointer",
                             }}
                         >
                             <input
-                                type={
-                                    showConfirmPassword
-                                        ? "text"
-                                        : "password"
-                                }
-                                name="password_confirmation"
-                                value={
-                                    form.password_confirmation
-                                }
+                                type="checkbox"
+                                name="declaration"
+                                checked={form.declaration}
                                 onChange={handleChange}
                                 required
                                 style={{
-                                    width: "100%",
-                                    padding:
-                                        "11px 65px 11px 12px",
-                                    border:
-                                        "1px solid #d9e2ef",
-                                    borderRadius: "8px",
-                                    boxSizing: "border-box",
+                                    marginTop: "2px",
+                                    width: "15px",
+                                    height: "15px",
+                                    flexShrink: 0,
+                                    cursor: "pointer",
                                 }}
                             />
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowConfirmPassword(
-                                        (previous) =>
-                                            !previous
-                                    )
-                                }
+                            <span
                                 style={{
-                                    position: "absolute",
-                                    right: "10px",
-                                    top: "50%",
-                                    transform:
-                                        "translateY(-50%)",
-                                    border: "none",
-                                    background:
-                                        "transparent",
-                                    color: "#112f80",
-                                    fontSize: "13px",
+                                    color: "#0a2a5e",
+                                    fontSize: "11px",
                                     fontWeight: "700",
-                                    cursor: "pointer",
-                                    padding: "4px",
+                                    lineHeight: "1.5",
                                 }}
                             >
-                                {showConfirmPassword
-                                    ? "Hide"
-                                    : "Show"}
-                            </button>
-                        </div>
+                                I confirm that I am making this
+                                enquiry on behalf of a business or
+                                as an independent professional
+                                seeking information about WSA's
+                                B2B Associate network.
+                            </span>
+                        </label>
                     </div>
 
                     {/* Submit */}
@@ -322,43 +716,44 @@ export default function Register() {
                         disabled={loading}
                         style={{
                             width: "100%",
-                            height: "44px",
+                            height: "42px",
                             border: "none",
-                            borderRadius: "8px",
-                            background: "#1747b8",
+                            borderRadius: "6px",
+                            background: "#2851ad",
                             color: "#ffffff",
-                            fontSize: "15px",
-                            fontWeight: "700",
+                            fontSize: "12px",
+                            fontWeight: "800",
+                            letterSpacing: "0.02em",
                             cursor: loading
                                 ? "not-allowed"
                                 : "pointer",
+                            opacity: loading ? 0.7 : 1,
                         }}
                     >
                         {loading
-                            ? "Creating Account..."
-                            : "Create Associate Account"}
+                            ? "SUBMITTING..."
+                            : "SUBMIT FOR APPROVAL"}
                     </button>
-                </form>
 
-                <div
-                    style={{
-                        marginTop: "20px",
-                        textAlign: "center",
-                        fontSize: "14px",
-                    }}
-                >
-                    Already have an account?{" "}
-
-                    <Link
-                        to="/"
+                    <div
                         style={{
-                            color: "#1747b8",
-                            fontWeight: "700",
+                            marginTop: "14px",
+                            textAlign: "center",
                         }}
                     >
-                        Login
-                    </Link>
-                </div>
+                        <Link
+                            to="/"
+                            style={{
+                                color: "#1747b8",
+                                fontSize: "11px",
+                                fontWeight: "700",
+                                textDecoration: "none",
+                            }}
+                        >
+                            ← Back to Login
+                        </Link>
+                    </div>
+                </form>
             </div>
         </div>
     );

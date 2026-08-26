@@ -555,7 +555,7 @@ export default function Login() {
                             to="/register"
                             className="inline-flex rounded-[8px] border border-[#112f80] bg-white px-[18px] py-[11px] text-[14px] font-extrabold text-[#112f80] no-underline"
                         >
-                            BECOME AN ASSOCIATE →
+                            SUBMIT FOR APPROVAL →
                         </Link>
 
                     </div>

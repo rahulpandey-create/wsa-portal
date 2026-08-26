@@ -23,6 +23,8 @@ import { getApplications } from "../api/applications";
 
 import {
     getAssociateRegistrations,
+    approveAssociateRegistration,
+    rejectAssociateRegistration,
 } from "../api/associateRegistrations";
 
 
@@ -60,7 +62,8 @@ export default function Dashboard() {
             Active: 0,
         });
 
-    const registrationActionLoading = null;
+    const [registrationActionLoading, setRegistrationActionLoading] =
+        useState(null);
 
     const [profiles, setProfiles] =
         useState([]);
@@ -534,7 +537,7 @@ export default function Dashboard() {
                     setHighlightedNotificationId(
                         (current) =>
                             current ===
-                            notification.id
+                                notification.id
                                 ? null
                                 : current
                     );
@@ -670,6 +673,83 @@ export default function Dashboard() {
 
     };
 
+const handleApproveAssociateRegistration = async (id) => {
+    const confirmed = window.confirm(
+        "Send account setup email?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        setRegistrationActionLoading(id);
+        setError("");
+
+        const response =
+            await approveAssociateRegistration(id);
+
+        setAssociateRegistrations((current) =>
+            current.filter(
+                (registration) => registration.id !== id
+            )
+        );
+
+        // Update the tab counts immediately
+        if (response?.registration) {
+            setRegistrationCounts((current) => ({
+                ...current,
+                Pending: Math.max(
+                    0,
+                    (current.Pending ?? 0) - 1
+                ),
+                Approved:
+                    (current.Approved ?? 0) + 1,
+            }));
+        }
+
+    } catch (error) {
+        console.error(
+            "Failed to approve associate registration:",
+            error
+        );
+
+        setError(
+            error.data?.message ||
+            "Failed to approve associate registration."
+        );
+    } finally {
+        setRegistrationActionLoading(null);
+    }
+};
+
+const handleRejectAssociateRegistration = async (id) => {
+    try {
+        setRegistrationActionLoading(id);
+        setError("");
+
+        await rejectAssociateRegistration(id);
+
+        setAssociateRegistrations((current) =>
+            current.filter(
+                (registration) => registration.id !== id
+            )
+        );
+
+    } catch (error) {
+        console.error(
+            "Failed to reject associate registration:",
+            error
+        );
+
+        setError(
+            error.data?.message ||
+            "Failed to reject associate registration."
+        );
+    } finally {
+        setRegistrationActionLoading(null);
+    }
+};
 
     // --------------------------------------------------
     // Associate Registration Status Filter
@@ -999,8 +1079,10 @@ export default function Dashboard() {
 
                                                             <button
                                                                 type="button"
-                                                                disabled={true}
-                                                                title="Temporarily disabled"
+                                                                disabled={registrationActionLoading === registration.id}
+                                                                onClick={() =>
+                                                                    handleApproveAssociateRegistration(registration.id)
+                                                                }
                                                                 className="rounded-[8px] bg-[#16a66f] px-[11px] py-[7px] text-[11px] font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                                             >
                                                                 {registrationActionLoading ===
@@ -1011,8 +1093,10 @@ export default function Dashboard() {
 
                                                             <button
                                                                 type="button"
-                                                                disabled={true}
-                                                                title="Temporarily disabled"
+                                                                disabled={registrationActionLoading === registration.id}
+                                                                onClick={() =>
+                                                                    handleRejectAssociateRegistration(registration.id)
+                                                                }
                                                                 className="rounded-[8px] bg-[#d9534f] px-[11px] py-[7px] text-[11px] font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                                             >
                                                                 {registrationActionLoading ===
