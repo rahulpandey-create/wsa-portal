@@ -25,6 +25,12 @@ export async function rejectJob(id) {
     });
 }
 
+export async function deleteJob(id) {
+    return apiRequest(`/job-posts/${id}`, {
+        method: "DELETE",
+    });
+}
+
 export async function createJob(jobData) {
     return apiRequest("/job-posts", {
         method: "POST",

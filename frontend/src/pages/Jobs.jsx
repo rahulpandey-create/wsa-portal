@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+
 import {
     getJobs,
     approveJob,
     rejectJob,
+    deleteJob,
 } from "../api/jobs";
 
 export default function Jobs() {
@@ -165,6 +167,44 @@ export default function Jobs() {
             setError(
                 error.data?.message ||
                 "Failed to reject job."
+            );
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleDelete = async (job) => {
+        const confirmed = window.confirm(
+            `Are you sure you want to permanently delete "${job.title}"?`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            setActionLoading(job.id);
+            setError("");
+
+            await deleteJob(job.id);
+
+            setJobs((currentJobs) =>
+                currentJobs.filter(
+                    (currentJob) =>
+                        currentJob.id !== job.id
+                )
+            );
+
+            alert("Job deleted successfully.");
+        } catch (error) {
+            console.error(
+                "Failed to delete job:",
+                error
+            );
+
+            setError(
+                error.data?.message ||
+                "Failed to delete job."
             );
         } finally {
             setActionLoading(null);
@@ -389,44 +429,63 @@ export default function Jobs() {
 
                                                         {normalizedStatus !==
                                                             "approved" && (
-                                                                <button
-                                                                    type="button"
-                                                                    disabled={
-                                                                        actionLoading ===
-                                                                        job.id
-                                                                    }
-                                                                    onClick={() =>
-                                                                        handleApprove(
-                                                                            job
-                                                                        )
-                                                                    }
-                                                                    className="rounded-[8px] bg-[#12a66a] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#0d8f5a] disabled:cursor-not-allowed disabled:opacity-60"
-                                                                >
-                                                                    {actionLoading ===
-                                                                        job.id
-                                                                        ? "..."
-                                                                        : "Approve"}
-                                                                </button>
-                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                disabled={
+                                                                    actionLoading ===
+                                                                    job.id
+                                                                }
+                                                                onClick={() =>
+                                                                    handleApprove(
+                                                                        job
+                                                                    )
+                                                                }
+                                                                className="rounded-[8px] bg-[#12a66a] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#0d8f5a] disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                {actionLoading ===
+                                                                    job.id
+                                                                    ? "..."
+                                                                    : "Approve"}
+                                                            </button>
+                                                        )}
 
                                                         {normalizedStatus ===
                                                             "pending" && (
-                                                                <button
-                                                                    type="button"
-                                                                    disabled={
-                                                                        actionLoading ===
-                                                                        job.id
-                                                                    }
-                                                                    onClick={() =>
-                                                                        handleReject(
-                                                                            job
-                                                                        )
-                                                                    }
-                                                                    className="rounded-[8px] border border-[#d5e0ee] bg-white px-3 py-2 text-[12px] font-bold text-[#c73737] transition hover:bg-[#fff5f5] disabled:cursor-not-allowed disabled:opacity-60"
-                                                                >
-                                                                    Reject
-                                                                </button>
-                                                            )}
+                                                            <button
+                                                                type="button"
+                                                                disabled={
+                                                                    actionLoading ===
+                                                                    job.id
+                                                                }
+                                                                onClick={() =>
+                                                                    handleReject(
+                                                                        job
+                                                                    )
+                                                                }
+                                                                className="rounded-[8px] border border-[#d5e0ee] bg-white px-3 py-2 text-[12px] font-bold text-[#c73737] transition hover:bg-[#fff5f5] disabled:cursor-not-allowed disabled:opacity-60"
+                                                            >
+                                                                Reject
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={
+                                                                actionLoading ===
+                                                                job.id
+                                                            }
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    job
+                                                                )
+                                                            }
+                                                            className="rounded-[8px] bg-[#c73737] px-3 py-2 text-[12px] font-bold text-white transition hover:bg-[#a92e2e] disabled:cursor-not-allowed disabled:opacity-60"
+                                                        >
+                                                            {actionLoading ===
+                                                                job.id
+                                                                ? "..."
+                                                                : "Delete"}
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>

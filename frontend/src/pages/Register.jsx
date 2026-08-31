@@ -313,84 +313,109 @@ export default function Register() {
     ];
 
     if (success) {
-        return (
+    return (
+        <div
+            style={{
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#f5f7fb",
+                padding: "30px 20px",
+                boxSizing: "border-box",
+            }}
+        >
             <div
                 style={{
-                    minHeight: "100vh",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#f5f7fb",
-                    padding: "30px 20px",
+                    width: "100%",
+                    maxWidth: "560px",
+                    background: "#ffffff",
+                    borderRadius: "14px",
+                    padding: "36px",
+                    boxShadow:
+                        "0 10px 30px rgba(30, 60, 100, 0.08)",
                     boxSizing: "border-box",
+                    textAlign: "center",
                 }}
             >
+                {/* Success Tick */}
                 <div
                     style={{
-                        width: "100%",
-                        maxWidth: "560px",
-                        background: "#ffffff",
-                        borderRadius: "14px",
-                        padding: "36px",
-                        boxShadow:
-                            "0 10px 30px rgba(30, 60, 100, 0.08)",
-                        boxSizing: "border-box",
-                        textAlign: "center",
+                        width: "64px",
+                        height: "64px",
+                        margin: "0 auto 20px",
+                        borderRadius: "50%",
+                        background: "#eef4ff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                     }}
                 >
-                    <h1
+                    <span
                         style={{
-                            margin: "0 0 16px",
-                            color: "#0a2a5e",
-                            fontSize: "25px",
-                            fontWeight: "800",
+                            color: "#1f4fc7",
+                            fontSize: "38px",
+                            fontWeight: "700",
+                            lineHeight: 1,
                         }}
                     >
-                        Registration Submitted
-                    </h1>
-
-                    <p
-                        style={{
-                            margin: "0 0 14px",
-                            color: "#475467",
-                            fontSize: "14px",
-                            lineHeight: "1.6",
-                        }}
-                    >
-                        Thank you for registering your interest
-                        in becoming a WSA Associate.
-                    </p>
-
-                    <p
-                        style={{
-                            margin: "0 0 14px",
-                            color: "#475467",
-                            fontSize: "14px",
-                            lineHeight: "1.6",
-                        }}
-                    >
-                        Your registration has been received
-                        and will be reviewed by the Work & Study
-                        Australia team.
-                    </p>
-
-                    <p
-                        style={{
-                            margin: 0,
-                            color: "#475467",
-                            fontSize: "14px",
-                            lineHeight: "1.6",
-                        }}
-                    >
-                        If your registration is approved, we
-                        will email you instructions to activate
-                        your Associate account and create your
-                        password.
-                    </p>
+                        ✓
+                    </span>
                 </div>
+
+                <h1
+                    style={{
+                        margin: "0 0 16px",
+                        color: "#0a2a5e",
+                        fontSize: "25px",
+                        fontWeight: "800",
+                    }}
+                >
+                    Registration Submitted
+                </h1>
+
+                <p
+                    style={{
+                        margin: "0 0 14px",
+                        color: "#475467",
+                        fontSize: "14px",
+                        lineHeight: "1.6",
+                    }}
+                >
+                    Thank you for registering your interest
+                    in becoming a WSA Associate.
+                </p>
+
+                <p
+                    style={{
+                        margin: "0 0 14px",
+                        color: "#475467",
+                        fontSize: "14px",
+                        lineHeight: "1.6",
+                    }}
+                >
+                    Your registration has been received
+                    and will be reviewed by the Work & Study
+                    Australia team.
+                </p>
+
+                <p
+                    style={{
+                        margin: 0,
+                        color: "#475467",
+                        fontSize: "14px",
+                        lineHeight: "1.6",
+                    }}
+                >
+                    If your registration is approved, we
+                    will email you instructions to activate
+                    your Associate account and create your
+                    password.
+                </p>
             </div>
-        );
-    }
+        </div>
+    );
+}
 
     return (
         <div

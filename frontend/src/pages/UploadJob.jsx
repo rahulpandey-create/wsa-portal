@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createJob } from "../api/jobs";
 
 export default function UploadJob() {
-    const [form, setForm] = useState({
+    const initialForm = {
         title: "",
         company: "",
         location: "Perth, WA",
@@ -17,7 +17,9 @@ export default function UploadJob() {
         description: "",
         requirements: "",
         employer_email: "",
-    });
+    };
+
+    const [form, setForm] = useState(initialForm);
 
     const [jobDocument, setJobDocument] = useState(null);
     const [confirmed, setConfirmed] = useState(false);
@@ -47,36 +49,29 @@ export default function UploadJob() {
                 title: form.title,
                 company: form.company,
                 location: form.location,
+                visa: form.visa,
                 job_type: form.job_type,
+                positions: form.positions,
                 salary: form.salary,
+                experience: form.experience,
+                qualifications: form.qualifications,
                 description: form.description,
+                requirements: form.requirements,
+                contact_email: form.employer_email,
             });
 
             alert(
                 "Job submitted successfully. It is now awaiting Admin approval."
             );
 
-            setForm({
-                title: "",
-                company: "",
-                location: "Perth, WA",
-                job_type: "Full-time",
-                salary: "",
-                positions: "1",
-                experience: "",
-                qualifications: "",
-                description: "",
-                requirements: "",
-                employer_email: "",
-            });
-
+            setForm(initialForm);
             setJobDocument(null);
             setConfirmed(false);
         } catch (error) {
             console.error("Failed to submit job:", error);
 
             alert(
-                error.data?.message ||
+                error?.data?.message ||
                 "Failed to submit job."
             );
         } finally {
@@ -125,25 +120,6 @@ export default function UploadJob() {
 
     return (
         <>
-            {/* Top Page Header */}
-
-            {/* <div className="page-header">
-                <div>
-                    <h2
-                        style={{
-                            margin: 0,
-                            fontSize: "27px",
-                            fontWeight: "700",
-                            color: "#0b2348",
-                        }}
-                    >
-                        Upload Job
-                    </h2>
-                </div>
-            </div> */}
-
-            {/* Main Content */}
-
             <div
                 style={{
                     padding: "24px 26px 30px",
@@ -208,9 +184,7 @@ export default function UploadJob() {
                             <div>
                                 <label style={labelStyle}>
                                     Job Title{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -229,12 +203,7 @@ export default function UploadJob() {
 
                             <div>
                                 <label style={labelStyle}>
-                                    Employer / Business Name{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
-                                        *
-                                    </span>
+                                    Employer / Business Name
                                 </label>
 
                                 <input
@@ -242,7 +211,6 @@ export default function UploadJob() {
                                     name="company"
                                     value={form.company}
                                     onChange={handleChange}
-                                    required
                                     style={inputStyle}
                                 />
                             </div>
@@ -252,9 +220,7 @@ export default function UploadJob() {
                             <div>
                                 <label style={labelStyle}>
                                     Location{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -273,7 +239,10 @@ export default function UploadJob() {
 
                             <div>
                                 <label style={labelStyle}>
-                                    Visa
+                                    Visa / Subclass{" "}
+                                    <span style={requiredStyle}>
+                                        *
+                                    </span>
                                 </label>
 
                                 <input
@@ -282,6 +251,7 @@ export default function UploadJob() {
                                     value={form.visa}
                                     onChange={handleChange}
                                     placeholder="e.g. 482 Sponsorship"
+                                    required
                                     style={inputStyle}
                                 />
                             </div>
@@ -291,9 +261,7 @@ export default function UploadJob() {
                             <div>
                                 <label style={labelStyle}>
                                     Employment Type{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -327,12 +295,7 @@ export default function UploadJob() {
 
                             <div>
                                 <label style={labelStyle}>
-                                    Salary / Hourly Rate{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
-                                        *
-                                    </span>
+                                    Salary / Hourly Rate
                                 </label>
 
                                 <input
@@ -340,7 +303,6 @@ export default function UploadJob() {
                                     name="salary"
                                     value={form.salary}
                                     onChange={handleChange}
-                                    required
                                     style={inputStyle}
                                 />
                             </div>
@@ -350,9 +312,7 @@ export default function UploadJob() {
                             <div>
                                 <label style={labelStyle}>
                                     Number of Positions{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -372,12 +332,7 @@ export default function UploadJob() {
 
                             <div>
                                 <label style={labelStyle}>
-                                    Minimum Experience{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
-                                        *
-                                    </span>
+                                    Minimum Experience
                                 </label>
 
                                 <input
@@ -385,7 +340,6 @@ export default function UploadJob() {
                                     name="experience"
                                     value={form.experience}
                                     onChange={handleChange}
-                                    required
                                     style={inputStyle}
                                 />
                             </div>
@@ -394,12 +348,7 @@ export default function UploadJob() {
 
                             <div>
                                 <label style={labelStyle}>
-                                    Minimum Qualifications{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
-                                        *
-                                    </span>
+                                    Minimum Qualifications
                                 </label>
 
                                 <input
@@ -407,7 +356,6 @@ export default function UploadJob() {
                                     name="qualifications"
                                     value={form.qualifications}
                                     onChange={handleChange}
-                                    required
                                     style={inputStyle}
                                 />
                             </div>
@@ -421,9 +369,7 @@ export default function UploadJob() {
                             >
                                 <label style={labelStyle}>
                                     Job Description{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -450,9 +396,7 @@ export default function UploadJob() {
                             >
                                 <label style={labelStyle}>
                                     Requirements{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -475,9 +419,7 @@ export default function UploadJob() {
                             <div>
                                 <label style={labelStyle}>
                                     Employer Contact Email{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -485,9 +427,7 @@ export default function UploadJob() {
                                 <input
                                     type="email"
                                     name="employer_email"
-                                    value={
-                                        form.employer_email
-                                    }
+                                    value={form.employer_email}
                                     onChange={handleChange}
                                     required
                                     style={inputStyle}
@@ -499,9 +439,7 @@ export default function UploadJob() {
                             <div>
                                 <label style={labelStyle}>
                                     Upload Job Document{" "}
-                                    <span
-                                        style={requiredStyle}
-                                    >
+                                    <span style={requiredStyle}>
                                         *
                                     </span>
                                 </label>
@@ -511,8 +449,7 @@ export default function UploadJob() {
                                     accept=".pdf,.doc,.docx"
                                     onChange={(e) =>
                                         setJobDocument(
-                                            e.target.files[0] ||
-                                            null
+                                            e.target.files[0] || null
                                         )
                                     }
                                     required
@@ -582,8 +519,7 @@ export default function UploadJob() {
                                         height: "42px",
                                         borderRadius: "8px",
                                         border: "none",
-                                        backgroundColor:
-                                            "#1747b8",
+                                        backgroundColor: "#1747b8",
                                         color: "#ffffff",
                                         fontSize: "16px",
                                         fontWeight: "700",

@@ -52,6 +52,10 @@ export default function App() {
                     element={<CreateAssociateAccount />}
                 />
                 <Route
+                    path="/associate-account-setup"
+                    element={<AssociateAccountSetup />}
+                />
+                <Route
                     element={
                         <ProtectedRoute>
                             <Layout />

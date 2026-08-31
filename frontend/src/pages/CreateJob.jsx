@@ -1,5 +1,3 @@
-// src/pages/CreateJob.jsx
-
 import { useState } from "react";
 import {
     createJob,
@@ -54,14 +52,18 @@ export default function CreateJob({ sponsored = false }) {
                 location: form.location,
                 visa: form.visa,
                 job_type: form.job_type,
+                positions: form.positions,
                 salary: form.salary,
+                experience: form.experience,
+                qualifications: form.qualifications,
                 description: form.description,
+                requirements: form.requirements,
+                contact_email: form.contact_email,
             };
 
             if (sponsored) {
                 jobData.visa = form.visa;
-            }
-            if (sponsored) {
+
                 await createSponsoredJob(jobData);
 
                 alert(
@@ -186,7 +188,7 @@ export default function CreateJob({ sponsored = false }) {
                                     color: "#071d49",
                                 }}
                             >
-                                Employer / Business Name *
+                                Employer / Business Name
                             </label>
 
                             <input
@@ -194,7 +196,6 @@ export default function CreateJob({ sponsored = false }) {
                                 name="company"
                                 value={form.company}
                                 onChange={handleChange}
-                                required
                                 style={{
                                     width: "100%",
                                     height: "43px",
@@ -242,41 +243,42 @@ export default function CreateJob({ sponsored = false }) {
                                 }}
                             />
                         </div>
-                        {/* Visa */}
-                        {sponsored && (
-                            <div>
-                                <label
-                                    style={{
-                                        display: "block",
-                                        marginBottom: "7px",
-                                        fontSize: "14px",
-                                        fontWeight: "700",
-                                        color: "#071d49",
-                                    }}
-                                >
-                                    Visa
-                                </label>
 
-                                <input
-                                    type="text"
-                                    name="visa"
-                                    value={form.visa}
-                                    onChange={handleChange}
-                                    placeholder="e.g. 482 Sponsorship"
-                                    style={{
-                                        width: "100%",
-                                        height: "43px",
-                                        padding: "0 12px",
-                                        border: "1px solid #cbd8e8",
-                                        borderRadius: "8px",
-                                        fontSize: "15px",
-                                        color: "#071d49",
-                                        outline: "none",
-                                        boxSizing: "border-box",
-                                    }}
-                                />
-                            </div>
-                        )}
+                        {/* Visa / Subclass */}
+                        <div>
+                            <label
+                                style={{
+                                    display: "block",
+                                    marginBottom: "7px",
+                                    fontSize: "14px",
+                                    fontWeight: "700",
+                                    color: "#071d49",
+                                }}
+                            >
+                                Visa / Subclass *
+                            </label>
+
+                            <input
+                                type="text"
+                                name="visa"
+                                value={form.visa}
+                                onChange={handleChange}
+                                placeholder="e.g. 482 Sponsorship"
+                                required
+                                style={{
+                                    width: "100%",
+                                    height: "43px",
+                                    padding: "0 12px",
+                                    border: "1px solid #cbd8e8",
+                                    borderRadius: "8px",
+                                    fontSize: "15px",
+                                    color: "#071d49",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+
                         {/* Employment Type */}
                         <div>
                             <label
@@ -338,7 +340,7 @@ export default function CreateJob({ sponsored = false }) {
                                     color: "#071d49",
                                 }}
                             >
-                                Salary / Hourly Rate *
+                                Salary / Hourly Rate
                             </label>
 
                             <input
@@ -347,7 +349,6 @@ export default function CreateJob({ sponsored = false }) {
                                 value={form.salary}
                                 onChange={handleChange}
                                 placeholder="$25/hour"
-                                required
                                 style={{
                                     width: "100%",
                                     height: "43px",
@@ -408,7 +409,7 @@ export default function CreateJob({ sponsored = false }) {
                                     color: "#071d49",
                                 }}
                             >
-                                Minimum Experience *
+                                Minimum Experience
                             </label>
 
                             <input
@@ -417,7 +418,6 @@ export default function CreateJob({ sponsored = false }) {
                                 value={form.experience}
                                 onChange={handleChange}
                                 placeholder="e.g. 2–3 years"
-                                required
                                 style={{
                                     width: "100%",
                                     height: "43px",
@@ -443,7 +443,7 @@ export default function CreateJob({ sponsored = false }) {
                                     color: "#071d49",
                                 }}
                             >
-                                Minimum Qualifications *
+                                Minimum Qualifications
                             </label>
 
                             <input
@@ -452,7 +452,6 @@ export default function CreateJob({ sponsored = false }) {
                                 value={form.qualifications}
                                 onChange={handleChange}
                                 placeholder="e.g. Bachelor's degree"
-                                required
                                 style={{
                                     width: "100%",
                                     height: "43px",

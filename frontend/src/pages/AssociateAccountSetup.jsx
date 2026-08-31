@@ -10,6 +10,8 @@ export default function AssociateAccountSetup() {
 
     const [password, setPassword] = useState("");
     const [passwordConfirmation, setPasswordConfirmation] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
@@ -120,17 +122,29 @@ export default function AssociateAccountSetup() {
                             Password
                         </label>
 
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(event) =>
-                                setPassword(event.target.value)
-                            }
-                            minLength={8}
-                            required
-                            className="w-full rounded-[9px] border border-[#d7e1ee] px-3 py-3 text-sm outline-none focus:border-[#1f4fc7]"
-                            placeholder="Enter your password"
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(event) =>
+                                    setPassword(event.target.value)
+                                }
+                                minLength={8}
+                                required
+                                className="w-full rounded-[9px] border border-[#d7e1ee] px-3 py-3 pr-16 text-sm outline-none focus:border-[#1f4fc7]"
+                                placeholder="Enter your password"
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowPassword(!showPassword)
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#1f4fc7] hover:text-[#1648b2]"
+                            >
+                                {showPassword ? "Hide" : "Show"}
+                            </button>
+                        </div>
                     </div>
 
                     <div>
@@ -138,17 +152,35 @@ export default function AssociateAccountSetup() {
                             Confirm password
                         </label>
 
-                        <input
-                            type="password"
-                            value={passwordConfirmation}
-                            onChange={(event) =>
-                                setPasswordConfirmation(event.target.value)
-                            }
-                            minLength={8}
-                            required
-                            className="w-full rounded-[9px] border border-[#d7e1ee] px-3 py-3 text-sm outline-none focus:border-[#1f4fc7]"
-                            placeholder="Confirm your password"
-                        />
+                        <div className="relative">
+                            <input
+                                type={
+                                    showPasswordConfirmation
+                                        ? "text"
+                                        : "password"
+                                }
+                                value={passwordConfirmation}
+                                onChange={(event) =>
+                                    setPasswordConfirmation(event.target.value)
+                                }
+                                minLength={8}
+                                required
+                                className="w-full rounded-[9px] border border-[#d7e1ee] px-3 py-3 pr-16 text-sm outline-none focus:border-[#1f4fc7]"
+                                placeholder="Confirm your password"
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowPasswordConfirmation(
+                                        !showPasswordConfirmation
+                                    )
+                                }
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#1f4fc7] hover:text-[#1648b2]"
+                            >
+                                {showPasswordConfirmation ? "Hide" : "Show"}
+                            </button>
+                        </div>
                     </div>
 
                     <button
