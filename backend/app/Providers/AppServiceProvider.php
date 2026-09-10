@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         VerifyEmail::createUrlUsing(function ($notifiable) {
 
-            return env('FRONTEND_URL') . '/verify-email?' . http_build_query([
+            return config('app.frontend_url') . '/verify-email?' . http_build_query([
                 'id' => $notifiable->getKey(),
                 'hash' => sha1($notifiable->getEmailForVerification()),
             ]);

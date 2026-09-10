@@ -18,6 +18,16 @@ use App\Http\Controllers\AssociateRegistrationController;
 Route::post('login', [AuthenticationController::class, 'login']);
 Route::post('associate-registrations', [AssociateRegistrationController::class, 'store']);
 
+Route::post(
+    'forgot-password',
+    [AssociateRegistrationController::class, 'forgotPassword']
+);
+
+Route::post(
+    'reset-password',
+    [AssociateRegistrationController::class, 'resetPassword']
+);
+
 Route::post('/setup-admin', function (Request $request) {
     $request->validate([
         'secret' => 'required|string',
@@ -65,7 +75,7 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     }
 
     return redirect(
-        env('FRONTEND_URL') . '/email-verified'
+        config('app.frontend_url') . '/email-verified'
     );
 
 })->middleware('signed')
@@ -147,7 +157,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         'job-posts/{jobPost}',
         [JobPostController::class, 'show']
     );
-
+    Route::get(
+        'candidate-applications/{candidateApplication}/resume',
+        [CandidateApplicationController::class, 'downloadResume']
+    );
 
     /*
     |--------------------------------------------------------------------------
@@ -219,7 +232,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
                     'name' => 'required|string|min:3|max:255',
                     'company' => 'nullable|string|max:255',
                     'country' => 'nullable|string|max:255',
-                    'status' => 'required|string|in:Active,Inactive',
+                    'status' => 'required|string|in:active,inactive',
                 ]);
 
                 $user->update($validated);
@@ -298,10 +311,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             [CandidateApplicationController::class, 'reject']
         );
 
-        Route::get(
-            'candidate-applications/{candidateApplication}/resume',
-            [CandidateApplicationController::class, 'downloadResume']
-        );
+
 
         Route::patch(
             'candidate-applications/{candidateApplication}/status',

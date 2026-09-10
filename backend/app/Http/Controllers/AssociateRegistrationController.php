@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\AssociateRegistration;
 use App\Models\User;
+use App\Models\PasswordResetToken;
+use App\Mail\PasswordResetMail;
 use Illuminate\Http\Request;
 use App\Mail\AssociateAccountSetupMail;
+use App\Mail\AssociateRegistrationAdminNotificationMail;
 use App\Models\AssociateAccountSetupToken;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Hash;
@@ -156,10 +159,42 @@ class AssociateRegistrationController extends Controller
             ], 422);
         }
 
+        // Save the registration first.
         $registration = AssociateRegistration::create([
             ...$validated,
             'status' => 'Pending',
         ]);
+
+        /*
+         * Send notification email to admin.
+         * Change this back to Info@workstudy-australia.com.au
+         * after testing is complete.
+         */
+        $adminEmail = 'rahul6395595358@gmail.com';
+
+        try {
+            Mail::to($adminEmail)->send(
+                new AssociateRegistrationAdminNotificationMail(
+                    $registration->representative_name,
+                    $registration->email
+                )
+            );
+        } catch (\Throwable $e) {
+
+            // Write the complete mail error to Laravel's log.
+            \Log::error('Associate admin notification email failed.', [
+                'registration_id' => $registration->id,
+                'admin_email' => $adminEmail,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'message' => 'Registration saved, but admin notification email failed.'
+            ], 201);
+        }
 
         return response()->json([
             'message' => 'Registration submitted successfully.',
@@ -254,7 +289,7 @@ class AssociateRegistrationController extends Controller
 
         // Build the frontend account setup URL.
         $setupUrl =
-            rtrim(env('FRONTEND_URL'), '/') .
+            rtrim(config('app.frontend_url'), '/') .
             '/associate-account-setup?token=' .
             urlencode($rawToken);
 
@@ -371,6 +406,112 @@ class AssociateRegistrationController extends Controller
 
         return response()->json([
             'message' => 'Account setup completed successfully.'
+        ]);
+    }
+    public function forgotPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $validated['email'])
+            ->where('role', 'associate')
+            ->first();
+
+        // Always return the same response.
+        // This prevents revealing whether an email is registered.
+        if (!$user) {
+            return response()->json([
+                'message' => 'If an account exists with this email, a password reset link has been sent.'
+            ]);
+        }
+
+        // Remove any previous reset tokens for this email.
+        PasswordResetToken::where('email', $user->email)->delete();
+
+        // Generate a secure token.
+        $rawToken = Str::random(64);
+
+        // Store only the hash.
+        PasswordResetToken::create([
+            'email' => $user->email,
+            'token_hash' => hash('sha256', $rawToken),
+            'expires_at' => now()->addMinutes(60),
+        ]);
+
+        // Build frontend reset URL.
+        $resetUrl =
+            rtrim(config('app.frontend_url'), '/') .
+            '/reset-password?token=' .
+            urlencode($rawToken);
+
+        try {
+            Mail::to($user->email)->send(
+                new PasswordResetMail(
+                    $resetUrl,
+                    $user->name
+                )
+            );
+        } catch (\Throwable $e) {
+
+            \Log::error('Password reset email failed.', [
+                'email' => $user->email,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Unable to send password reset email.'
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'If an account exists with this email, a password reset link has been sent.'
+        ]);
+    }
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $tokenHash = hash('sha256', $validated['token']);
+
+        $resetToken = PasswordResetToken::where(
+            'token_hash',
+            $tokenHash
+        )
+            ->whereNull('used_at')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (!$resetToken) {
+            return response()->json([
+                'message' => 'This password reset link is invalid or has expired.'
+            ], 422);
+        }
+
+        $user = User::where('email', $resetToken->email)
+            ->where('role', 'associate')
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Associate account not found.'
+            ], 404);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        $resetToken->update([
+            'used_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Password reset successfully. You can now log in.'
         ]);
     }
 }

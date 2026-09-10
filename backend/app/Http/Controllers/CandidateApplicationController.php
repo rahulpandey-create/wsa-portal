@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\CandidateApplicationResource;
 use App\Models\CandidateApplication;
 use Illuminate\Http\Request;
+use App\Notifications\ApplicationStatusNotification;
+use App\Notifications\NewApplicationNotification;
 
 class CandidateApplicationController extends Controller
 {
@@ -98,15 +100,15 @@ class CandidateApplicationController extends Controller
         $validated = $request->validated();
 
         // Prevent duplicate application
-        $alreadyApplied = CandidateApplication::where('user_id', $request->user()->id)
-            ->where('job_post_id', $validated['job_post_id'])
-            ->exists();
+        // $alreadyApplied = CandidateApplication::where('user_id', $request->user()->id)
+        //     ->where('job_post_id', $validated['job_post_id'])
+        //     ->exists();
 
-        if ($alreadyApplied) {
-            return response()->json([
-                'message' => 'You have already applied for this job.'
-            ], 409);
-        }
+        // if ($alreadyApplied) {
+        //     return response()->json([
+        //         'message' => 'You have already applied for this job.'
+        //     ], 409);
+        // }
         $resumePath = null;
 
         if ($request->hasFile('resume')) {
@@ -129,12 +131,22 @@ class CandidateApplicationController extends Controller
             'status' => 'pending',
         ]);
 
+        // Notify all Admin users about the new candidate application
+        $application->load(['user', 'jobPost']);
+
+        \App\Models\User::where('role', 'admin')
+            ->each(function ($admin) use ($application) {
+                $admin->notify(
+                    new NewApplicationNotification($application)
+                );
+            });
         return response()->json([
             'message' => 'Application submitted successfully',
             'data' => new CandidateApplicationResource(
                 $application->load(['user', 'jobPost'])
             )
         ], 201);
+
     }
 
     /**
@@ -375,6 +387,13 @@ class CandidateApplicationController extends Controller
         $candidateApplication->status = $newStatus;
         $candidateApplication->save();
 
+        // Send notification to the Associate who submitted the application
+        $candidateApplication->load('jobPost');
+
+        $candidateApplication->user->notify(
+            new ApplicationStatusNotification($candidateApplication)
+        );
+
         return response()->json([
             'message' => 'Application status updated successfully',
 
@@ -385,6 +404,11 @@ class CandidateApplicationController extends Controller
     }
     public function downloadResume(CandidateApplication $candidateApplication)
     {
+        if (!auth()->user()->is_admin && $candidateApplication->user_id !== auth()->id()) {
+            return response()->json([
+                'message' => 'Unauthorized.'
+            ], 403);
+        }
         if (!$candidateApplication->resume) {
             return response()->json([
                 'message' => 'Resume not uploaded.'

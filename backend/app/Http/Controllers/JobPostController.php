@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Notifications\JobApprovedNotification;
 use App\Notifications\JobSubmittedNotification;
+use App\Notifications\NewJobNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\JobPost;
 use App\Http\Requests\StoreJobPostRequest;
 use App\Http\Requests\UpdateJobPostRequest;
@@ -19,36 +20,14 @@ class JobPostController extends Controller
      */
     public function index(Request $request)
     {
-        // dd("INDEX HIT");
-
-        // dd($request->user()->role);
-
         if ($request->user()->role === 'admin') {
             $jobPosts = JobPost::all();
         } else {
             $jobPosts = JobPost::where('status', 'approved')->get();
         }
 
-        // return JobPostResource::collection(
-        //     $query->paginate($perPage)
-// );
-
         return JobPostResource::collection($jobPosts);
-
-        // return response()->json($request->user());
-
-        //  return response()->json([
-        //     'controller' => __FILE__,
-        //     'method' => __METHOD__,
-        // ]);
-
-        //  return response()->json([
-        //     'user' => $request->user(),
-        //     'role' => $request->user()->role
-        // ]);
-
     }
-
 
     public function myJobs(Request $request)
     {
@@ -82,12 +61,17 @@ class JobPostController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'company' => 'required|string|max:255',
+            'company' => 'nullable|string|max:255',
             'location' => 'required|string|max:255',
-            'visa' => 'nullable|string|max:255',
-            'salary' => 'nullable|numeric',
+            'visa' => 'required|string|max:255',
+            'salary' => 'nullable|string|max:255',
             'job_type' => 'required|string|max:100',
+            'positions' => 'required|integer|min:1',
+            'experience' => 'nullable|string|max:255',
+            'qualifications' => 'nullable|string|max:255',
             'description' => 'required|string',
+            'requirements' => 'required|string',
+            'contact_email' => 'nullable|email|max:255',
         ]);
 
         $jobPost = JobPost::create([
@@ -96,6 +80,8 @@ class JobPostController extends Controller
             'status' => 'approved',
             'is_sponsored' => true,
         ]);
+
+        $this->notifyAssociatesAboutLiveJob($jobPost);
 
         return response()->json([
             'message' => 'Sponsored job created successfully.',
@@ -106,20 +92,10 @@ class JobPostController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(storeJobPostRequest $request)
+    public function store(StoreJobPostRequest $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'company' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
-            'visa' => 'nullable|string|max:255',
-            'salary' => 'nullable|numeric',
-            'job_type' => 'required|string|max:100',
-            'description' => 'required|string',
-            // 'status' => 'nullable|in:pending,approved,rejected',
-        ]);
+       $validated = $request->validated();
 
-        // $job = \App\Models\JobPost::create($validated);
         $jobPost = JobPost::create([
             ...$validated,
             'user_id' => $request->user()->id,
@@ -140,7 +116,6 @@ class JobPostController extends Controller
             'data' => new JobPostResource($jobPost),
         ], 201);
     }
-
 
     public function upload(Request $request)
     {
@@ -171,12 +146,13 @@ class JobPostController extends Controller
 
         $requiredHeaders = [
             'title',
-            'company',
             'location',
             'visa',
-            'salary',
             'job_type',
+            'positions',
             'description',
+            'requirements',
+            'contact_email',
         ];
 
         foreach ($requiredHeaders as $header) {
@@ -194,22 +170,34 @@ class JobPostController extends Controller
 
             if (
                 empty($data['title']) ||
-                empty($data['company']) ||
                 empty($data['location']) ||
+                empty($data['visa']) ||
                 empty($data['job_type']) ||
-                empty($data['description'])
+                empty($data['positions']) ||
+                empty($data['description']) ||
+                empty($data['requirements']) ||
+                empty($data['contact_email'])
             ) {
                 continue;
             }
 
             $jobPost = JobPost::create([
                 'title' => $data['title'],
-                'company' => $data['company'],
+                'company' => $data['company'] ?? null,
                 'location' => $data['location'],
-                'visa' => $data['visa'] ?: null,
-                'salary' => $data['salary'] ?: null,
+                'visa' => $data['visa'],
+                'salary' => !empty($data['salary']) ? $data['salary'] : null,
                 'job_type' => $data['job_type'],
+                'positions' => $data['positions'],
+                'experience' => !empty($data['experience'])
+                    ? $data['experience']
+                    : null,
+                'qualifications' => !empty($data['qualifications'])
+                    ? $data['qualifications']
+                    : null,
                 'description' => $data['description'],
+                'requirements' => $data['requirements'],
+                'contact_email' => $data['contact_email'],
                 'status' => 'pending',
             ]);
 
@@ -229,7 +217,6 @@ class JobPostController extends Controller
             'data' => JobPostResource::collection($created),
         ], 201);
     }
-
 
     /**
      * Display the specified resource.
@@ -259,8 +246,10 @@ class JobPostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateJobPostRequest $request, JobPost $jobPost)
-    {
+    public function update(
+        UpdateJobPostRequest $request,
+        JobPost $jobPost
+    ) {
         $validated = $request->validated();
 
         $jobPost->update($validated);
@@ -270,26 +259,43 @@ class JobPostController extends Controller
             'data' => new JobPostResource($jobPost)
         ]);
     }
+
     public function approve(JobPost $jobPost)
     {
         DB::transaction(function () use ($jobPost) {
-
             $jobPost->status = 'approved';
             $jobPost->save();
-
-            $associates = User::where('role', 'associate')->get();
-
-            foreach ($associates as $associate) {
-                $associate->notify(
-                    new JobApprovedNotification($jobPost)
-                );
-            }
         });
+
+        $this->notifyAssociatesAboutLiveJob($jobPost->fresh());
 
         return response()->json([
             'message' => 'Job approved successfully',
-            'data' => new JobPostResource($jobPost),
+            'data' => new JobPostResource($jobPost->fresh()),
         ]);
+    }
+
+    private function notifyAssociatesAboutLiveJob(JobPost $jobPost): void
+    {
+        User::where('role', 'associate')
+            ->each(function (User $associate) use ($jobPost) {
+                try {
+                    $associate->notify(
+                        new NewJobNotification($jobPost)
+                    );
+                } catch (\Throwable $exception) {
+                    Log::error(
+                        'Failed to notify associate about live job.',
+                        [
+                            'job_id' => $jobPost->id,
+                            'associate_id' => $associate->id,
+                            'associate_email' => $associate->email,
+                            'exception' => get_class($exception),
+                            'message' => $exception->getMessage(),
+                        ]
+                    );
+                }
+            });
     }
 
     public function reject(JobPost $jobPost)
@@ -302,7 +308,6 @@ class JobPostController extends Controller
             'data' => new JobPostResource($jobPost)
         ]);
     }
-
 
     /**
      * Remove the specified resource from storage.

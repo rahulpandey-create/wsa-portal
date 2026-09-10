@@ -16,7 +16,12 @@ class JobPost extends Model
         'visa',
         'salary',
         'job_type',
+        'positions',
+        'experience',
+        'qualifications',
         'description',
+        'requirements',
+        'contact_email',
         'status',
         'is_sponsored',
     ];
