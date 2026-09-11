@@ -44,7 +44,8 @@ jobs:
           SSH_HOST: ${{ secrets.STAGING_HOST }}
           SSH_USER: ${{ secrets.STAGING_USER }}
         run: |
-          ssh -vvv \
+          ssh \
+            -p 22999 \
             -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=no \
             "$SSH_USER@$SSH_HOST" \
@@ -56,6 +57,6 @@ jobs:
           SSH_USER: ${{ secrets.STAGING_USER }}
         run: |
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
+            -e "ssh -p 22999 -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
             frontend/dist/ \
             "$SSH_USER@$SSH_HOST:/home/httpworkstudyaus/staging.associates.workstudy-australia.com.au/"
