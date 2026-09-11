@@ -51,17 +51,14 @@ jobs:
             "$SSH_USER@$SSH_HOST" \
             "echo SSH connection successful"
 
-      - name: Install rsync
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rsync
-
       - name: Deploy frontend
         env:
           SSH_HOST: ${{ secrets.STAGING_HOST }}
           SSH_USER: ${{ secrets.STAGING_USER }}
         run: |
-          rsync -avz --delete \
-            -e "ssh -p 22999 -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no" \
-            frontend/dist/ \
+          scp \
+            -P 22999 \
+            -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=no \
+            -r frontend/dist/* \
             "$SSH_USER@$SSH_HOST:/home/httpworkstudyaus/staging.associates.workstudy-australia.com.au/"
