@@ -32,15 +32,31 @@ jobs:
         run: npm run build -- --mode staging
 
       - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.STAGING_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "${{ secrets.STAGING_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 10 -H "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Test SSH connection
+        env:
+          SSH_HOST: ${{ secrets.STAGING_HOST }}
+          SSH_USER: ${{ secrets.STAGING_USER }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            "$SSH_USER@$SSH_HOST" \
+            "echo SSH connection successful"
 
       - name: Deploy frontend
+        env:
+          SSH_HOST: ${{ secrets.STAGING_HOST }}
+          SSH_USER: ${{ secrets.STAGING_USER }}
         run: |
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/id_ed25519" \
+            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes" \
             frontend/dist/ \
-            ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/home/httpworkstudyaus/staging.associates.workstudy-australia.com.au/
+            "$SSH_USER@$SSH_HOST:/home/httpworkstudyaus/staging.associates.workstudy-australia.com.au/"
