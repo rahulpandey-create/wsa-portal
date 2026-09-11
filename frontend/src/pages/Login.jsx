@@ -379,7 +379,7 @@ export default function Login() {
                     <div className="mb-[26px] flex items-center gap-[13px]">
 
                         <div className="grid h-[52px] w-[52px] place-items-center rounded-[15px] bg-[linear-gradient(145deg,#112f80,#1762c6)] text-[19px] font-black text-white">
-                            WSA
+                            WSA Associate Portal - STAGING TEST
                         </div>
 
                         <div>
